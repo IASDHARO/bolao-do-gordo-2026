@@ -95,9 +95,11 @@ export default function RelatoriosPage() {
       .map((linha) => linha.join(';'))
       .join('\n')
 
-    const blob = new Blob([csv], {
-      type: 'text/csv;charset=utf-8;',
-    })
+    const csvComBOM = '\uFEFF' + csv
+
+const blob = new Blob([csvComBOM], {
+  type: 'text/csv;charset=utf-8;',
+})
 
     const url = URL.createObjectURL(blob)
 
