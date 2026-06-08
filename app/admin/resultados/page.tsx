@@ -84,6 +84,28 @@ export default function ResultadosPage() {
     carregarJogos()
   }
 
+  async function limparResultado(matchId: string) {
+    setMensagem('Limpando resultado...')
+
+    const { error } = await supabase
+      .from('matches')
+      .update({
+        resultado: null,
+        encerrado: false,
+      })
+      .eq('id', matchId)
+
+    if (error) {
+      setMensagem('Erro ao limpar resultado: ' + error.message)
+      return
+    }
+
+    await supabase.rpc('atualizar_ranking')
+
+    setMensagem('✅ Resultado removido com sucesso')
+    carregarJogos()
+  }
+
   if (!liberado || loading) {
     return <main className="p-8">Carregando...</main>
   }
@@ -135,9 +157,18 @@ export default function ResultadosPage() {
             </div>
 
             {jogo.resultado && (
-              <p className="mt-3 font-bold">
-                Resultado salvo: {jogo.resultado}
-              </p>
+              <div className="mt-3">
+                <p className="font-bold mb-2">
+                  Resultado salvo: {jogo.resultado}
+                </p>
+
+                <button
+                  onClick={() => limparResultado(jogo.id)}
+                  className="bg-red-600 text-white p-2 rounded-lg"
+                >
+                  ❌ Limpar Resultado
+                </button>
+              </div>
             )}
           </div>
         ))}
