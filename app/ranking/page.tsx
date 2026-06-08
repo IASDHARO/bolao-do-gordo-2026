@@ -36,6 +36,14 @@ async function sair() {
   window.location.href = '/'
 }
 
+function mostrarPosicao(index: number) {
+  if (index === 0) return '🥇'
+  if (index === 1) return '🥈'
+  if (index === 2) return '🥉'
+
+  return `${index + 1}º`
+}
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-green-200 via-yellow-100 to-blue-200 p-8">
       <h1 className="text-4xl font-bold mb-6">
@@ -62,9 +70,9 @@ async function sair() {
           <tbody>
             {ranking.map((item, index) => (
               <tr key={index} className="border-b">
-                <td className="p-3 text-center">
-                  {index + 1}
-                </td>
+                <td className="p-3 text-center text-xl">
+  {mostrarPosicao(index)}
+</td>
 
                 <td className="p-3">
                   {item.usuario?.nome}
