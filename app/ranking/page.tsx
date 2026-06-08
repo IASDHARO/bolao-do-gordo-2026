@@ -11,38 +11,46 @@ export default function RankingPage() {
   }, [])
 
   async function carregarRanking() {
-  const { data: rankingData } = await supabase
-    .from('ranking')
-    .select('*')
-    .order('pontos', { ascending: false })
+    const { data: rankingData } = await supabase
+      .from('ranking')
+      .select('*')
+      .order('pontos', { ascending: false })
 
-  const { data: usersData } = await supabase
-    .from('users')
-    .select('*')
+    const { data: usersData } = await supabase
+      .from('users')
+      .select('*')
 
-  const rankingCompleto =
-    rankingData?.map((item) => ({
-      ...item,
-      usuario: usersData?.find(
-        (u) => u.id === item.user_id
-      ),
-    })) || []
+    const rankingCompleto =
+      rankingData?.map((item) => ({
+        ...item,
+        usuario: usersData?.find(
+          (u) => u.id === item.user_id
+        ),
+      })) || []
 
-  setRanking(rankingCompleto)
-}
+    setRanking(rankingCompleto)
+  }
 
-async function sair() {
-  await supabase.auth.signOut()
-  window.location.href = '/'
-}
+  async function sair() {
+    await supabase.auth.signOut()
+    window.location.href = '/'
+  }
 
-function mostrarPosicao(index: number) {
-  if (index === 0) return '🥇'
-  if (index === 1) return '🥈'
-  if (index === 2) return '🥉'
+  function mostrarPosicao(index: number) {
+    if (index === 0) return '🥇'
+    if (index === 1) return '🥈'
+    if (index === 2) return '🥉'
 
-  return `${index + 1}º`
-}
+    return `${index + 1}º`
+  }
+
+  function classeLinha(index: number) {
+    if (index === 0) return 'bg-yellow-100 font-bold'
+    if (index === 1) return 'bg-gray-100 font-bold'
+    if (index === 2) return 'bg-orange-100 font-bold'
+
+    return 'bg-white'
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-green-200 via-yellow-100 to-blue-200 p-8">
@@ -51,11 +59,11 @@ function mostrarPosicao(index: number) {
       </h1>
 
       <button
-  onClick={sair}
-  className="bg-red-600 text-white px-4 py-2 rounded-lg mb-6"
->
-  Sair
-</button>
+        onClick={sair}
+        className="bg-red-600 text-white px-4 py-2 rounded-lg mb-6"
+      >
+        Sair
+      </button>
 
       <div className="bg-white rounded-xl shadow overflow-hidden">
         <table className="w-full">
@@ -69,13 +77,17 @@ function mostrarPosicao(index: number) {
 
           <tbody>
             {ranking.map((item, index) => (
-              <tr key={index} className="border-b">
-                <td className="p-3 text-center text-xl">
-  {mostrarPosicao(index)}
-</td>
+              <tr
+                key={index}
+                className={`border-b ${classeLinha(index)}`}
+              >
+                <td className="p-3 text-center text-2xl">
+                  {mostrarPosicao(index)}
+                </td>
 
                 <td className="p-3">
-                  {item.usuario?.nome}
+                  {item.usuario?.nome ||
+                    item.usuario?.email}
                 </td>
 
                 <td className="p-3 text-center font-bold">
