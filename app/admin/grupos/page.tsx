@@ -118,6 +118,30 @@ export default function AdminGruposPage() {
     }))
   }
 
+async function limparResultadoGrupo(groupId: string) {
+  setMensagem('Limpando resultado do grupo...')
+
+  const { error } = await supabase
+    .from('group_results')
+    .delete()
+    .eq('group_id', groupId)
+
+  if (error) {
+    setMensagem('Erro ao limpar resultado do grupo: ' + error.message)
+    return
+  }
+
+  await supabase.rpc('atualizar_ranking')
+
+  setResultados((atual) => {
+    const novo = { ...atual }
+    delete novo[groupId]
+    return novo
+  })
+
+  setMensagem('✅ Resultado do grupo removido com sucesso')
+}
+
   if (!liberado || loading) {
     return <main className="p-8">Carregando...</main>
   }
@@ -194,6 +218,14 @@ export default function AdminGruposPage() {
               >
                 Salvar resultado oficial
               </button>
+              {resultados[grupo.id]?.id && (
+  <button
+    onClick={() => limparResultadoGrupo(grupo.id)}
+    className="bg-red-600 text-white px-4 py-2 rounded-lg ml-2"
+  >
+    ❌ Limpar resultado oficial
+  </button>
+)}
             </div>
           )
         })}
