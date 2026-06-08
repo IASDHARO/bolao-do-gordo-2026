@@ -3,11 +3,17 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 
+const PRAZO_FINAL = new Date('2026-06-11T16:00:00')
+
 export default function DashboardPage() {
   const [participantes, setParticipantes] = useState(0)
   const [palpitesJogos, setPalpitesJogos] = useState(0)
   const [palpitesGrupos, setPalpitesGrupos] = useState(0)
   const [ranking, setRanking] = useState<any[]>([])
+  const [resumoJogos, setResumoJogos] = useState<any[]>([])
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [filtroData, setFiltroData] = useState('')
+  const [filtroJogo, setFiltroJogo] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -15,6 +21,22 @@ export default function DashboardPage() {
   }, [])
 
   async function carregarDashboard() {
+    const { data: auth } = await supabase.auth.getUser()
+
+    if (!auth.user) {
+      window.location.href = '/'
+      return
+    }
+
+    const { data: usuario } = await supabase
+      .from('users')
+      .select('is_admin')
+      .eq('id', auth.user.id)
+      .single()
+
+    const admin = !!usuario?.is_admin
+    setIsAdmin(admin)
+
     const { count: totalUsuarios } = await supabase
       .from('users')
       .select('*', { count: 'exact', head: true })
@@ -36,12 +58,64 @@ export default function DashboardPage() {
       .order('pontos', { ascending: false })
       .limit(10)
 
+    const { data: jogosData } = await supabase
+      .from('matches')
+      .select(`
+        id,
+        match_number,
+        data_hora,
+        team1:teams!matches_team1_id_fkey(nome),
+        team2:teams!matches_team2_id_fkey(nome)
+      `)
+      .order('match_number')
+
+    const { data: palpitesData } = await supabase
+      .from('match_predictions')
+      .select('match_id, prediction')
+
+    const resumo = (jogosData || []).map((jogo: any) => {
+      const palpitesDoJogo =
+        palpitesData?.filter((p: any) => p.match_id === jogo.id) || []
+
+      return {
+        ...jogo,
+        totalTeam1: palpitesDoJogo.filter((p: any) => p.prediction === 'team1').length,
+        totalDraw: palpitesDoJogo.filter((p: any) => p.prediction === 'draw').length,
+        totalTeam2: palpitesDoJogo.filter((p: any) => p.prediction === 'team2').length,
+      }
+    })
+
     setParticipantes(totalUsuarios || 0)
     setPalpitesJogos(totalJogos || 0)
     setPalpitesGrupos(totalGrupos || 0)
     setRanking(rankingData || [])
-
+    setResumoJogos(resumo)
     setLoading(false)
+  }
+
+  function podeVerResumo() {
+    return isAdmin || new Date() >= PRAZO_FINAL
+  }
+
+  function jogosFiltrados() {
+    return resumoJogos.filter((jogo: any) => {
+      const dataJogo = jogo.data_hora
+        ? new Date(jogo.data_hora).toISOString().slice(0, 10)
+        : ''
+
+      const textoJogo = `
+        ${jogo.match_number}
+        ${jogo.team1?.nome || ''}
+        ${jogo.team2?.nome || ''}
+      `.toLowerCase()
+
+      const passaData = !filtroData || dataJogo === filtroData
+      const passaJogo =
+        !filtroJogo ||
+        textoJogo.includes(filtroJogo.toLowerCase())
+
+      return passaData && passaJogo
+    })
   }
 
   if (loading) {
@@ -56,34 +130,22 @@ export default function DashboardPage() {
 
       <div className="grid md:grid-cols-3 gap-4 mb-8">
         <div className="bg-white rounded-xl shadow p-6">
-          <h2 className="text-lg font-bold">
-            👥 Participantes
-          </h2>
-          <p className="text-4xl font-bold mt-2">
-            {participantes}
-          </p>
+          <h2 className="text-lg font-bold">👥 Participantes</h2>
+          <p className="text-4xl font-bold mt-2">{participantes}</p>
         </div>
 
         <div className="bg-white rounded-xl shadow p-6">
-          <h2 className="text-lg font-bold">
-            ⚽ Palpites dos Jogos
-          </h2>
-          <p className="text-4xl font-bold mt-2">
-            {palpitesJogos}
-          </p>
+          <h2 className="text-lg font-bold">⚽ Palpites dos Jogos</h2>
+          <p className="text-4xl font-bold mt-2">{palpitesJogos}</p>
         </div>
 
         <div className="bg-white rounded-xl shadow p-6">
-          <h2 className="text-lg font-bold">
-            🏆 Palpites dos Grupos
-          </h2>
-          <p className="text-4xl font-bold mt-2">
-            {palpitesGrupos}
-          </p>
+          <h2 className="text-lg font-bold">🏆 Palpites dos Grupos</h2>
+          <p className="text-4xl font-bold mt-2">{palpitesGrupos}</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow p-6">
+      <div className="bg-white rounded-xl shadow p-6 mb-8">
         <h2 className="text-2xl font-bold mb-4">
           🥇 Top 10 Ranking
         </h2>
@@ -100,23 +162,91 @@ export default function DashboardPage() {
           <tbody>
             {ranking.map((item: any, index) => (
               <tr key={index} className="border-b">
-                <td className="p-2">
-                  {index + 1}º
-                </td>
+                <td className="p-2">{index + 1}º</td>
 
                 <td className="p-2">
-                  {item.users?.nome ||
-                    item.users?.email}
+                  {item.users?.nome || item.users?.email}
                 </td>
 
-                <td className="p-2 font-bold">
-                  {item.pontos}
-                </td>
+                <td className="p-2 font-bold">{item.pontos}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {podeVerResumo() ? (
+        <div className="bg-white rounded-xl shadow p-6">
+          <h2 className="text-2xl font-bold mb-4">
+            📋 Resumo dos Palpites por Jogo
+          </h2>
+
+          <div className="grid md:grid-cols-2 gap-3 mb-4">
+            <input
+              type="date"
+              value={filtroData}
+              onChange={(e) => setFiltroData(e.target.value)}
+              className="border p-2 rounded-lg"
+            />
+
+            <input
+              type="text"
+              placeholder="Filtrar por jogo ou seleção..."
+              value={filtroJogo}
+              onChange={(e) => setFiltroJogo(e.target.value)}
+              className="border p-2 rounded-lg"
+            />
+          </div>
+
+          <div className="grid gap-4">
+            {jogosFiltrados().map((jogo: any) => (
+              <div
+                key={jogo.id}
+                className="border rounded-xl p-4"
+              >
+                <h3 className="font-bold text-lg mb-2">
+                  Jogo {jogo.match_number}: {jogo.team1?.nome} x {jogo.team2?.nome}
+                </h3>
+
+                <p className="text-sm text-gray-600 mb-3">
+                  {new Date(jogo.data_hora).toLocaleString('pt-BR')}
+                </p>
+
+                <div className="grid md:grid-cols-3 gap-2">
+                  <div className="bg-green-100 p-3 rounded-lg">
+                    <strong>{jogo.team1?.nome}</strong>
+                    <br />
+                    {jogo.totalTeam1} apostas
+                  </div>
+
+                  <div className="bg-yellow-100 p-3 rounded-lg">
+                    <strong>Empate</strong>
+                    <br />
+                    {jogo.totalDraw} apostas
+                  </div>
+
+                  <div className="bg-blue-100 p-3 rounded-lg">
+                    <strong>{jogo.team2?.nome}</strong>
+                    <br />
+                    {jogo.totalTeam2} apostas
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl shadow p-6">
+          <h2 className="text-2xl font-bold mb-2">
+            📋 Resumo dos Palpites por Jogo
+          </h2>
+
+          <p>
+            Este resumo ficará disponível para os participantes a partir de
+            11/06/2026 às 16:00.
+          </p>
+        </div>
+      )}
     </main>
   )
 }
