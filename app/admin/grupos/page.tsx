@@ -122,9 +122,10 @@ async function limparResultadoGrupo(groupId: string) {
   setMensagem('Limpando resultado do grupo...')
 
   const { error } = await supabase
-    .from('group_results')
-    .delete()
-    .eq('group_id', groupId)
+  .from('group_results')
+  .delete()
+  .eq('group_id', groupId)
+  .select()
 
   if (error) {
     setMensagem('Erro ao limpar resultado do grupo: ' + error.message)
