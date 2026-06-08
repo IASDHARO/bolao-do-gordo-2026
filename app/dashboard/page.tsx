@@ -77,11 +77,34 @@ export default function DashboardPage() {
       const palpitesDoJogo =
         palpitesData?.filter((p: any) => p.match_id === jogo.id) || []
 
+      const totalTeam1 = palpitesDoJogo.filter(
+        (p: any) => p.prediction === 'team1'
+      ).length
+
+      const totalDraw = palpitesDoJogo.filter(
+        (p: any) => p.prediction === 'draw'
+      ).length
+
+      const totalTeam2 = palpitesDoJogo.filter(
+        (p: any) => p.prediction === 'team2'
+      ).length
+
+      const totalPalpites = totalTeam1 + totalDraw + totalTeam2
+
       return {
         ...jogo,
-        totalTeam1: palpitesDoJogo.filter((p: any) => p.prediction === 'team1').length,
-        totalDraw: palpitesDoJogo.filter((p: any) => p.prediction === 'draw').length,
-        totalTeam2: palpitesDoJogo.filter((p: any) => p.prediction === 'team2').length,
+        totalTeam1,
+        totalDraw,
+        totalTeam2,
+        percentualTeam1: totalPalpites
+          ? Math.round((totalTeam1 / totalPalpites) * 100)
+          : 0,
+        percentualDraw: totalPalpites
+          ? Math.round((totalDraw / totalPalpites) * 100)
+          : 0,
+        percentualTeam2: totalPalpites
+          ? Math.round((totalTeam2 / totalPalpites) * 100)
+          : 0,
       }
     })
 
@@ -216,19 +239,19 @@ export default function DashboardPage() {
                   <div className="bg-green-100 p-3 rounded-lg">
                     <strong>{jogo.team1?.nome}</strong>
                     <br />
-                    {jogo.totalTeam1} apostas
+                    {jogo.totalTeam1} apostas ({jogo.percentualTeam1}%)
                   </div>
 
                   <div className="bg-yellow-100 p-3 rounded-lg">
                     <strong>Empate</strong>
                     <br />
-                    {jogo.totalDraw} apostas
+                    {jogo.totalDraw} apostas ({jogo.percentualDraw}%)
                   </div>
 
                   <div className="bg-blue-100 p-3 rounded-lg">
                     <strong>{jogo.team2?.nome}</strong>
                     <br />
-                    {jogo.totalTeam2} apostas
+                    {jogo.totalTeam2} apostas ({jogo.percentualTeam2}%)
                   </div>
                 </div>
               </div>
