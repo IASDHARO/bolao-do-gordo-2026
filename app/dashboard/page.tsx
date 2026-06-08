@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { supabase } from '../../lib/supabase'
 
 const PRAZO_FINAL = new Date('2026-06-11T16:00:00')
@@ -150,6 +151,61 @@ export default function DashboardPage() {
       <h1 className="text-4xl font-bold mb-8">
         📊 Dashboard do Bolão
       </h1>
+      <div className="grid md:grid-cols-4 gap-4 mb-8">
+
+  <Link
+    href="/perfil"
+    className="bg-white rounded-xl shadow p-6 hover:shadow-lg transition"
+  >
+    <h2 className="text-xl font-bold mb-2">
+      👤 Meu Perfil
+    </h2>
+
+    <p>
+      Veja sua posição, pontos e estatísticas.
+    </p>
+  </Link>
+
+  <Link
+    href="/ranking"
+    className="bg-white rounded-xl shadow p-6 hover:shadow-lg transition"
+  >
+    <h2 className="text-xl font-bold mb-2">
+      🥇 Ranking
+    </h2>
+
+    <p>
+      Consulte a classificação geral do bolão.
+    </p>
+  </Link>
+
+  <Link
+    href="/palpites"
+    className="bg-white rounded-xl shadow p-6 hover:shadow-lg transition"
+  >
+    <h2 className="text-xl font-bold mb-2">
+      ⚽ Palpites
+    </h2>
+
+    <p>
+      Envie e acompanhe seus palpites dos jogos.
+    </p>
+  </Link>
+
+  <Link
+    href="/grupos"
+    className="bg-white rounded-xl shadow p-6 hover:shadow-lg transition"
+  >
+    <h2 className="text-xl font-bold mb-2">
+      🏆 Grupos
+    </h2>
+
+    <p>
+      Defina e acompanhe os classificados dos grupos.
+    </p>
+  </Link>
+
+</div>
 
       <div className="grid md:grid-cols-3 gap-4 mb-8">
         <div className="bg-white rounded-xl shadow p-6">
