@@ -90,7 +90,12 @@ export default function GruposPage() {
       return
     }
 
-    await supabase.rpc('atualizar_ranking')
+    const { error: rankingError } = await supabase.rpc('atualizar_ranking')
+
+if (rankingError) {
+  setMensagem('Palpite salvo, mas erro ao atualizar ranking: ' + rankingError.message)
+  return
+}
 
     setMensagem('✅ Palpite do grupo salvo com sucesso')
   }
