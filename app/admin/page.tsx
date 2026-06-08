@@ -92,6 +92,32 @@ export default function AdminPage() {
           <h2 className="text-xl font-bold mb-2">🥇 Ranking</h2>
           <p>Visualizar classificação geral do bolão.</p>
         </Link>
+
+        <Link
+  href="/admin/relatorios"
+  className="bg-white p-6 rounded-xl shadow hover:shadow-lg"
+>
+  <h2 className="text-xl font-bold mb-2">
+    📊 Relatório dos Jogos
+  </h2>
+
+  <p>
+    Visualizar e exportar os palpites dos jogos.
+  </p>
+</Link>
+
+<Link
+  href="/admin/relatorios-grupos"
+  className="bg-white p-6 rounded-xl shadow hover:shadow-lg"
+>
+  <h2 className="text-xl font-bold mb-2">
+    🏆 Relatório dos Grupos
+  </h2>
+
+  <p>
+    Visualizar acertos e exportar os palpites dos grupos.
+  </p>
+</Link>
       </div>
     </main>
   )
