@@ -90,6 +90,8 @@ export default function GruposPage() {
       return
     }
 
+    await supabase.rpc('atualizar_ranking')
+
     setMensagem('✅ Palpite do grupo salvo com sucesso')
   }
 

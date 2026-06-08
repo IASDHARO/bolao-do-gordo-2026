@@ -87,6 +87,8 @@ export default function PalpitesPage() {
       return
     }
 
+    await supabase.rpc('atualizar_ranking')
+
     setMensagem('✅ Palpite salvo com sucesso')
   }
 
