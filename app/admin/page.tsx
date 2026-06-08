@@ -4,8 +4,6 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import Link from 'next/link'
 
-const ADMIN_EMAIL = 'iasdharo@hotmail.com'
-
 export default function AdminPage() {
   const [liberado, setLiberado] = useState(false)
 
@@ -23,7 +21,13 @@ export default function AdminPage() {
       return
     }
 
-    if (user.email !== ADMIN_EMAIL) {
+    const { data: usuario, error } = await supabase
+      .from('users')
+      .select('is_admin')
+      .eq('id', user.id)
+      .single()
+
+    if (error || !usuario?.is_admin) {
       alert('Acesso negado')
       window.location.href = '/palpites'
       return
@@ -33,9 +37,9 @@ export default function AdminPage() {
   }
 
   async function sair() {
-  await supabase.auth.signOut()
-  window.location.href = '/'
-}
+    await supabase.auth.signOut()
+    window.location.href = '/'
+  }
 
   if (!liberado) {
     return (
@@ -50,12 +54,13 @@ export default function AdminPage() {
       <h1 className="text-4xl font-bold mb-8">
         🇧🇷 Painel Administrativo
       </h1>
+
       <button
-  onClick={sair}
-  className="bg-red-600 text-white px-4 py-2 rounded-lg mb-6"
->
-  Sair
-</button>
+        onClick={sair}
+        className="bg-red-600 text-white px-4 py-2 rounded-lg mb-6"
+      >
+        Sair
+      </button>
 
       <div className="grid gap-4 md:grid-cols-2">
         <Link href="/admin/resultados" className="bg-white p-6 rounded-xl shadow hover:shadow-lg">

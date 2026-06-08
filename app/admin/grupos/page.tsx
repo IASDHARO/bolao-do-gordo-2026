@@ -3,8 +3,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 
-const ADMIN_EMAIL = 'iasdharo@hotmail.com'
-
 export default function AdminGruposPage() {
   const [grupos, setGrupos] = useState<any[]>([])
   const [times, setTimes] = useState<any[]>([])
@@ -27,7 +25,13 @@ export default function AdminGruposPage() {
       return
     }
 
-    if (user.email !== ADMIN_EMAIL) {
+    const { data: usuario, error } = await supabase
+      .from('users')
+      .select('is_admin')
+      .eq('id', user.id)
+      .single()
+
+    if (error || !usuario?.is_admin) {
       alert('Acesso negado')
       window.location.href = '/palpites'
       return

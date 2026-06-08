@@ -3,8 +3,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 
-const ADMIN_EMAIL = 'iasdharo@hotmail.com'
-
 export default function ResultadosPage() {
   const [jogos, setJogos] = useState<any[]>([])
   const [mensagem, setMensagem] = useState('')
@@ -25,7 +23,13 @@ export default function ResultadosPage() {
       return
     }
 
-    if (user.email !== ADMIN_EMAIL) {
+    const { data: usuario, error } = await supabase
+      .from('users')
+      .select('is_admin')
+      .eq('id', user.id)
+      .single()
+
+    if (error || !usuario?.is_admin) {
       alert('Acesso negado')
       window.location.href = '/palpites'
       return
