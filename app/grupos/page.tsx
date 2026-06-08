@@ -72,6 +72,17 @@ export default function GruposPage() {
       return
     }
 
+    if (
+  palpite.primeiro_id === palpite.segundo_id ||
+  palpite.primeiro_id === palpite.terceiro_id ||
+  palpite.segundo_id === palpite.terceiro_id
+) {
+  setMensagem(
+    'Não é permitido repetir a mesma seleção nas posições do grupo.'
+  )
+  return
+}
+
     const { error } = await supabase
       .from('group_predictions')
       .upsert(
@@ -163,11 +174,26 @@ if (rankingError) {
                   >
                     <option value="">Selecione</option>
 
-                    {timesDoGrupo.map((time) => (
-                      <option key={time.id} value={time.id}>
-                        {time.nome}
-                      </option>
-                    ))}
+                    {timesDoGrupo
+  .filter((time) => {
+    const palpiteAtual = palpites[grupo.id] || {}
+
+    const selecionados = [
+      palpiteAtual.primeiro_id,
+      palpiteAtual.segundo_id,
+      palpiteAtual.terceiro_id,
+    ]
+
+    return (
+      time.id === palpiteAtual[campo] ||
+      !selecionados.includes(time.id)
+    )
+  })
+  .map((time) => (
+    <option key={time.id} value={time.id}>
+      {time.nome}
+    </option>
+  ))}
                   </select>
                 </div>
               ))}

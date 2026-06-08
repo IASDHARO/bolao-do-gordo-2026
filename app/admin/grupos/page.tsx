@@ -79,6 +79,14 @@ export default function AdminGruposPage() {
       setMensagem('Preencha as três posições.')
       return
     }
+    if (
+  resultado.primeiro_id === resultado.segundo_id ||
+  resultado.primeiro_id === resultado.terceiro_id ||
+  resultado.segundo_id === resultado.terceiro_id
+) {
+  setMensagem('Não é permitido repetir a mesma seleção nas três posições.')
+  return
+}
 
     const { error } = await supabase
       .from('group_results')
