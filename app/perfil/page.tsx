@@ -12,6 +12,10 @@ export default function PerfilPage() {
   const [pontosGrupos, setPontosGrupos] = useState(0)
   const [qtJogos, setQtJogos] = useState(0)
   const [qtGrupos, setQtGrupos] = useState(0)
+  const [jogosAcertados, setJogosAcertados] = useState(0)
+  const [jogosErrados, setJogosErrados] = useState(0)
+  const [taxaAcerto, setTaxaAcerto] = useState(0)
+  const [ultimosPalpites, setUltimosPalpites] = useState<any[]>([])
 
   useEffect(() => {
     carregarPerfil()
@@ -58,21 +62,55 @@ export default function PerfilPage() {
       .from('match_predictions')
       .select(`
         prediction,
-        matches(resultado,encerrado)
+        matches(
+          match_number,
+          resultado,
+          encerrado,
+          data_hora,
+          team1:teams!matches_team1_id_fkey(nome),
+          team2:teams!matches_team2_id_fkey(nome)
+        )
       `)
       .eq('user_id', auth.user.id)
 
-    const pontosJ =
-      palpitesJogos
-        ?.filter(
-          (p: any) =>
-            p.matches?.encerrado &&
-            p.prediction === p.matches?.resultado
-        )
-        .length || 0
+    const jogosEncerrados =
+      palpitesJogos?.filter(
+        (p: any) => p.matches?.encerrado === true
+      ) || []
 
-    setPontosJogos(pontosJ)
+    const acertos =
+      jogosEncerrados.filter(
+        (p: any) =>
+          p.prediction === p.matches?.resultado
+      ).length
+
+    const erros =
+      jogosEncerrados.filter(
+        (p: any) =>
+          p.prediction !== p.matches?.resultado
+      ).length
+
+    const taxa =
+      jogosEncerrados.length > 0
+        ? Math.round((acertos / jogosEncerrados.length) * 100)
+        : 0
+
+    setPontosJogos(acertos)
+    setJogosAcertados(acertos)
+    setJogosErrados(erros)
+    setTaxaAcerto(taxa)
     setQtJogos(palpitesJogos?.length || 0)
+
+    const ultimos =
+      (palpitesJogos || [])
+        .sort((a: any, b: any) => {
+          const jogoA = a.matches?.match_number || 0
+          const jogoB = b.matches?.match_number || 0
+          return jogoB - jogoA
+        })
+        .slice(0, 5)
+
+    setUltimosPalpites(ultimos)
 
     const { data: palpitesGrupos } = await supabase
       .from('group_predictions')
@@ -111,6 +149,13 @@ export default function PerfilPage() {
     setQtGrupos(palpitesGrupos?.length || 0)
 
     setLoading(false)
+  }
+
+  function traduzirPalpite(valor: string, jogo: any) {
+    if (valor === 'team1') return jogo?.team1?.nome || 'Time 1'
+    if (valor === 'team2') return jogo?.team2?.nome || 'Time 2'
+    if (valor === 'draw') return 'Empate'
+    return '-'
   }
 
   if (loading) {
@@ -158,6 +203,18 @@ export default function PerfilPage() {
 
         <div className="bg-white rounded-xl shadow p-6">
           <h3 className="font-bold">
+            🎯 Taxa de Acerto
+          </h3>
+
+          <p className="text-4xl font-bold mt-2">
+            {taxaAcerto}%
+          </p>
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-4 mb-6">
+        <div className="bg-white rounded-xl shadow p-6">
+          <h3 className="font-bold">
             ⚽ Pontos em Jogos
           </h3>
 
@@ -165,9 +222,7 @@ export default function PerfilPage() {
             {pontosJogos}
           </p>
         </div>
-      </div>
 
-      <div className="grid md:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl shadow p-6">
           <h3 className="font-bold">
             🏆 Pontos em Grupos
@@ -175,6 +230,28 @@ export default function PerfilPage() {
 
           <p className="text-4xl font-bold mt-2">
             {pontosGrupos}
+          </p>
+        </div>
+
+        <div className="bg-white rounded-xl shadow p-6">
+          <h3 className="font-bold">
+            ✅ Jogos Acertados
+          </h3>
+
+          <p className="text-4xl font-bold mt-2">
+            {jogosAcertados}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-4 mb-6">
+        <div className="bg-white rounded-xl shadow p-6">
+          <h3 className="font-bold">
+            ❌ Jogos Errados
+          </h3>
+
+          <p className="text-4xl font-bold mt-2">
+            {jogosErrados}
           </p>
         </div>
 
@@ -197,6 +274,60 @@ export default function PerfilPage() {
             {qtGrupos}
           </p>
         </div>
+      </div>
+
+      <div className="bg-white rounded-xl shadow p-6">
+        <h2 className="text-2xl font-bold mb-4">
+          🕘 Últimos Palpites dos Jogos
+        </h2>
+
+        {ultimosPalpites.length === 0 ? (
+          <p>Nenhum palpite enviado ainda.</p>
+        ) : (
+          <div className="grid gap-3">
+            {ultimosPalpites.map((item: any, index) => (
+              <div
+                key={index}
+                className="border rounded-lg p-3"
+              >
+                <p className="font-bold">
+                  Jogo {item.matches?.match_number}:{' '}
+                  {item.matches?.team1?.nome} x{' '}
+                  {item.matches?.team2?.nome}
+                </p>
+
+                <p>
+                  Seu palpite:{' '}
+                  <strong>
+                    {traduzirPalpite(
+                      item.prediction,
+                      item.matches
+                    )}
+                  </strong>
+                </p>
+
+                {item.matches?.encerrado ? (
+                  <p>
+                    Resultado:{' '}
+                    <strong>
+                      {traduzirPalpite(
+                        item.matches?.resultado,
+                        item.matches
+                      )}
+                    </strong>{' '}
+                    {item.prediction === item.matches?.resultado
+                      ? '✅ Acertou'
+                      : '❌ Errou'}
+                  </p>
+                ) : (
+                  <p className="text-gray-600">
+                    Jogo ainda não encerrado.
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </main>
   )
