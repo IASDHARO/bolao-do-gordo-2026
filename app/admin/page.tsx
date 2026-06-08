@@ -118,6 +118,18 @@ export default function AdminPage() {
     Visualizar acertos e exportar os palpites dos grupos.
   </p>
 </Link>
+<Link
+  href="/dashboard"
+  className="bg-white p-6 rounded-xl shadow hover:shadow-lg"
+>
+  <h2 className="text-xl font-bold mb-2">
+    📊 Dashboard
+  </h2>
+
+  <p>
+    Acompanhar estatísticas e Top 10 do bolão.
+  </p>
+</Link>
       </div>
     </main>
   )
