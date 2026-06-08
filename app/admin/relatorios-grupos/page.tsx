@@ -13,10 +13,13 @@ export default function RelatoriosGruposPage() {
   }, [])
 
   async function carregarRelatorio() {
-    const { data, error } = await supabase
+    const { data: palpitesData, error } = await supabase
       .from('group_predictions')
       .select(`
         group_id,
+        primeiro_id,
+        segundo_id,
+        terceiro_id,
         users(nome,email),
         groups(nome),
         primeiro:teams!group_predictions_primeiro_id_fkey(nome),
@@ -30,7 +33,43 @@ export default function RelatoriosGruposPage() {
       return
     }
 
-    const ordenado = (data || []).sort((a: any, b: any) => {
+    const { data: resultadosData } = await supabase
+      .from('group_results')
+      .select(`
+        group_id,
+        primeiro_id,
+        segundo_id,
+        terceiro_id
+      `)
+
+    const mapaResultados: Record<string, any> = {}
+
+    resultadosData?.forEach((r: any) => {
+      mapaResultados[r.group_id] = r
+    })
+
+    const tratado = (palpitesData || []).map((item: any) => {
+      const resultado = mapaResultados[item.group_id]
+
+      let pontos = 0
+      let temResultado = false
+
+      if (resultado) {
+        temResultado = true
+
+        if (item.primeiro_id === resultado.primeiro_id) pontos++
+        if (item.segundo_id === resultado.segundo_id) pontos++
+        if (item.terceiro_id === resultado.terceiro_id) pontos++
+      }
+
+      return {
+        ...item,
+        pontos,
+        temResultado,
+      }
+    })
+
+    const ordenado = tratado.sort((a: any, b: any) => {
       const usuarioA = a.users?.email || ''
       const usuarioB = b.users?.email || ''
 
@@ -63,6 +102,7 @@ export default function RelatoriosGruposPage() {
         'Primeiro',
         'Segundo',
         'Terceiro',
+        'Acertos',
       ],
     ]
 
@@ -73,6 +113,7 @@ export default function RelatoriosGruposPage() {
         item.primeiro?.nome || '',
         item.segundo?.nome || '',
         item.terceiro?.nome || '',
+        item.temResultado ? `${item.pontos}/3` : '-',
       ])
     })
 
@@ -132,6 +173,7 @@ export default function RelatoriosGruposPage() {
               <th className="p-3 text-left">1º</th>
               <th className="p-3 text-left">2º</th>
               <th className="p-3 text-left">3º</th>
+              <th className="p-3 text-left">Acertos</th>
             </tr>
           </thead>
 
@@ -156,6 +198,10 @@ export default function RelatoriosGruposPage() {
 
                 <td className="p-3">
                   {item.terceiro?.nome}
+                </td>
+
+                <td className="p-3 font-bold">
+                  {item.temResultado ? `${item.pontos}/3` : '-'}
                 </td>
               </tr>
             ))}
