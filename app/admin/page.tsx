@@ -130,6 +130,32 @@ export default function AdminPage() {
     Acompanhar estatísticas e Top 10 do bolão.
   </p>
 </Link>
+
+<Link
+  href="/admin/relatorio-geral"
+  className="bg-white p-6 rounded-xl shadow hover:shadow-lg"
+>
+  <h2 className="text-xl font-bold mb-2">
+    📋 Relatório Geral
+  </h2>
+
+  <p>
+    Ver pontos dos jogos, pontos dos grupos e total geral.
+  </p>
+</Link>
+
+<Link
+  href="/admin/exportacoes"
+  className="bg-white p-6 rounded-xl shadow hover:shadow-lg"
+>
+  <h2 className="text-xl font-bold mb-2">
+    📥 Exportações
+  </h2>
+
+  <p>
+    Baixar participantes, ranking e palpites em CSV.
+  </p>
+</Link>
       </div>
     </main>
   )
