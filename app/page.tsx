@@ -29,34 +29,15 @@ export default function Home() {
       return
     }
 
-    const { error: userError } = await supabase
-      .from('users')
-      .upsert({
-        id: authUser.id,
-        nome: authUser.email,
-        email: authUser.email,
-      })
-
-    if (userError) {
-      setMensagem(
-        'Login realizado, mas erro ao salvar usuário: ' +
-          userError.message
-      )
-      return
-    }
-
-    const { data: usuarioData, error: adminError } =
+    const { data: usuarioData, error: usuarioError } =
       await supabase
         .from('users')
-        .select('is_admin')
+        .select('is_admin, precisa_trocar_senha')
         .eq('id', authUser.id)
         .single()
 
-    if (adminError) {
-      setMensagem(
-        'Erro ao verificar permissões: ' +
-          adminError.message
-      )
+    if (usuarioError) {
+      setMensagem('Erro ao verificar usuário: ' + usuarioError.message)
       return
     }
 
@@ -64,9 +45,15 @@ export default function Home() {
 
     if (usuarioData?.is_admin) {
       window.location.href = '/admin'
-    } else {
-      window.location.href = '/dashboard'
+      return
     }
+
+    if (usuarioData?.precisa_trocar_senha) {
+      window.location.href = '/trocar-senha'
+      return
+    }
+
+    window.location.href = '/dashboard'
   }
 
   return (
@@ -94,9 +81,7 @@ export default function Home() {
             placeholder="E-mail"
             className="w-full border rounded-lg p-3"
             value={email}
-            onChange={(e) =>
-              setEmail(e.target.value)
-            }
+            onChange={(e) => setEmail(e.target.value)}
           />
 
           <input
@@ -104,9 +89,7 @@ export default function Home() {
             placeholder="Senha"
             className="w-full border rounded-lg p-3"
             value={senha}
-            onChange={(e) =>
-              setSenha(e.target.value)
-            }
+            onChange={(e) => setSenha(e.target.value)}
           />
 
           <button

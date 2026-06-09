@@ -41,6 +41,7 @@ export async function POST(req: Request) {
           nome,
           email,
           is_admin: false,
+          precisa_trocar_senha: true,
         })
 
     if (insertError) {
