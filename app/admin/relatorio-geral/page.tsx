@@ -29,14 +29,19 @@ export default function RelatorioGeralPage() {
       .from('group_predictions')
       .select(`
         user_id,
+        group_id,
         primeiro_id,
         segundo_id,
-        terceiro_id,
-        group_results(
-          primeiro_id,
-          segundo_id,
-          terceiro_id
-        )
+        terceiro_id
+      `)
+
+    const { data: groupResults } = await supabase
+      .from('group_results')
+      .select(`
+        group_id,
+        primeiro_id,
+        segundo_id,
+        terceiro_id
       `)
 
     const relatorio = (usersData || []).map((usuario: any) => {
@@ -49,24 +54,29 @@ export default function RelatorioGeralPage() {
               p.prediction === p.matches?.resultado
           ).length || 0
 
-      const pontosGrupos =
-        groupPredictions
-          ?.filter((p: any) => p.user_id === usuario.id)
-          .reduce((total: number, p: any) => {
-            const resultado = Array.isArray(p.group_results)
-              ? p.group_results[0]
-              : p.group_results
+      const palpitesGruposUsuario =
+        groupPredictions?.filter(
+          (p: any) => p.user_id === usuario.id
+        ) || []
 
-            if (!resultado) return total
+      let pontosGrupos = 0
 
-            let pontos = 0
+      palpitesGruposUsuario.forEach((palpite: any) => {
+        const resultado = groupResults?.find(
+          (r: any) => r.group_id === palpite.group_id
+        )
 
-            if (p.primeiro_id === resultado.primeiro_id) pontos++
-            if (p.segundo_id === resultado.segundo_id) pontos++
-            if (p.terceiro_id === resultado.terceiro_id) pontos++
+        if (!resultado) return
 
-            return total + pontos
-          }, 0) || 0
+        if (palpite.primeiro_id === resultado.primeiro_id)
+          pontosGrupos++
+
+        if (palpite.segundo_id === resultado.segundo_id)
+          pontosGrupos++
+
+        if (palpite.terceiro_id === resultado.terceiro_id)
+          pontosGrupos++
+      })
 
       return {
         usuario,
