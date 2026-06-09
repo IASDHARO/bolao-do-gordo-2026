@@ -13,99 +13,31 @@ export default function RelatorioGeralPage() {
   }, [])
 
   async function carregarRelatorio() {
-    const { data: usersData } = await supabase
-      .from('users')
-      .select('id,nome,email')
+    const { data, error } = await supabase
+      .rpc('relatorio_geral')
 
-    const { data: matchPredictions } = await supabase
-      .from('match_predictions')
-      .select(`
-        user_id,
-        prediction,
-        matches(resultado, encerrado)
-      `)
+    if (error) {
+      console.error(error)
+      setLoading(false)
+      return
+    }
 
-    const { data: groupPredictions } = await supabase
-      .from('group_predictions')
-      .select(`
-        user_id,
-        group_id,
-        primeiro_id,
-        segundo_id,
-        terceiro_id
-      `)
-
-    const { data: groupResults } = await supabase
-      .from('group_results')
-      .select(`
-        group_id,
-        primeiro_id,
-        segundo_id,
-        terceiro_id
-      `)
-
-    const relatorio = (usersData || []).map((usuario: any) => {
-      const pontosJogos =
-        matchPredictions
-          ?.filter((p: any) => p.user_id === usuario.id)
-          .filter(
-            (p: any) =>
-              p.matches?.encerrado === true &&
-              p.prediction === p.matches?.resultado
-          ).length || 0
-
-      const palpitesGruposUsuario =
-        groupPredictions?.filter(
-          (p: any) => p.user_id === usuario.id
-        ) || []
-
-      let pontosGrupos = 0
-
-      palpitesGruposUsuario.forEach((palpite: any) => {
-        const resultado = groupResults?.find(
-          (r: any) => r.group_id === palpite.group_id
-        )
-
-        if (!resultado) return
-
-        if (palpite.primeiro_id === resultado.primeiro_id)
-          pontosGrupos++
-
-        if (palpite.segundo_id === resultado.segundo_id)
-          pontosGrupos++
-
-        if (palpite.terceiro_id === resultado.terceiro_id)
-          pontosGrupos++
-      })
-
-      return {
-        usuario,
-        pontosJogos,
-        pontosGrupos,
-        total: pontosJogos + pontosGrupos,
-      }
-    })
-
-    const ordenado = relatorio.sort(
-      (a: any, b: any) => b.total - a.total
-    )
-
-    setDados(ordenado)
+    setDados(data || [])
     setLoading(false)
   }
 
   function dadosFiltrados() {
-    return dados.filter((item: any) =>
-      (item.usuario?.email || '')
-        .toLowerCase()
-        .includes(filtro.toLowerCase())
-    )
+    return dados.filter((item: any) => {
+      const texto = `${item.nome || ''} ${item.email || ''}`.toLowerCase()
+      return texto.includes(filtro.toLowerCase())
+    })
   }
 
   function exportarCSV() {
     const linhas = [
       [
         'Participante',
+        'E-mail',
         'Pontos Jogos',
         'Pontos Grupos',
         'Total Geral',
@@ -114,10 +46,11 @@ export default function RelatorioGeralPage() {
 
     dadosFiltrados().forEach((item: any) => {
       linhas.push([
-        item.usuario?.email || '',
-        String(item.pontosJogos),
-        String(item.pontosGrupos),
-        String(item.total),
+        item.nome || '',
+        item.email || '',
+        String(item.pontos_jogos || 0),
+        String(item.pontos_grupos || 0),
+        String(item.total || 0),
       ])
     })
 
@@ -173,6 +106,7 @@ export default function RelatorioGeralPage() {
           <thead>
             <tr className="bg-green-600 text-white">
               <th className="p-3 text-left">Participante</th>
+              <th className="p-3 text-left">E-mail</th>
               <th className="p-3 text-left">Pontos Jogos</th>
               <th className="p-3 text-left">Pontos Grupos</th>
               <th className="p-3 text-left">Total Geral</th>
@@ -180,18 +114,22 @@ export default function RelatorioGeralPage() {
           </thead>
 
           <tbody>
-            {dadosFiltrados().map((item: any, index) => (
-              <tr key={index} className="border-b">
+            {dadosFiltrados().map((item: any) => (
+              <tr key={item.user_id} className="border-b">
                 <td className="p-3">
-                  {item.usuario?.nome || item.usuario?.email}
+                  {item.nome || 'Participante'}
                 </td>
 
                 <td className="p-3">
-                  {item.pontosJogos}
+                  {item.email}
                 </td>
 
                 <td className="p-3">
-                  {item.pontosGrupos}
+                  {item.pontos_jogos}
+                </td>
+
+                <td className="p-3">
+                  {item.pontos_grupos}
                 </td>
 
                 <td className="p-3 font-bold">
