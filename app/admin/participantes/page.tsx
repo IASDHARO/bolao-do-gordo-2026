@@ -8,6 +8,9 @@ export default function ParticipantesPage() {
   const [filtro, setFiltro] = useState('')
   const [mensagem, setMensagem] = useState('')
   const [loading, setLoading] = useState(true)
+  const [novoNome, setNovoNome] = useState('')
+const [novoEmail, setNovoEmail] = useState('')
+const [novaSenha, setNovaSenha] = useState('')
 
   useEffect(() => {
     carregarParticipantes()
@@ -70,11 +73,94 @@ export default function ParticipantesPage() {
     return <main className="p-8">Carregando...</main>
   }
 
+  async function criarParticipante() {
+  setMensagem('Criando participante...')
+
+  const response = await fetch(
+    '/api/criar-participante',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        nome: novoNome,
+        email: novoEmail,
+        senha: novaSenha,
+      }),
+    }
+  )
+
+  const resultado = await response.json()
+
+  if (!response.ok) {
+    setMensagem(
+      'Erro ao criar participante: ' +
+        resultado.error
+    )
+    return
+  }
+
+  setMensagem(
+    '✅ Participante criado com sucesso'
+  )
+
+  setNovoNome('')
+  setNovoEmail('')
+  setNovaSenha('')
+
+  carregarParticipantes()
+}
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-green-200 via-yellow-100 to-blue-200 p-8">
       <h1 className="text-4xl font-bold mb-6">
         👥 Participantes
       </h1>
+      <div className="bg-white rounded-xl shadow p-6 mb-6">
+  <h2 className="text-2xl font-bold mb-4">
+    ➕ Novo Participante
+  </h2>
+
+  <div className="grid md:grid-cols-3 gap-3">
+    <input
+      type="text"
+      placeholder="Nome"
+      value={novoNome}
+      onChange={(e) =>
+        setNovoNome(e.target.value)
+      }
+      className="border rounded-lg p-3"
+    />
+
+    <input
+      type="email"
+      placeholder="E-mail"
+      value={novoEmail}
+      onChange={(e) =>
+        setNovoEmail(e.target.value)
+      }
+      className="border rounded-lg p-3"
+    />
+
+    <input
+      type="password"
+      placeholder="Senha provisória"
+      value={novaSenha}
+      onChange={(e) =>
+        setNovaSenha(e.target.value)
+      }
+      className="border rounded-lg p-3"
+    />
+  </div>
+
+  <button
+    onClick={criarParticipante}
+    className="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg"
+  >
+    Criar Participante
+  </button>
+</div>
 
       {mensagem && (
         <div className="bg-white rounded-lg shadow p-3 mb-4">
