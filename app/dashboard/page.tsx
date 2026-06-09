@@ -232,9 +232,22 @@ async function sair() {
   </p>
 </Link>
 
+<Link
+  href="/financeiro"
+  className="bg-white rounded-xl shadow p-6 hover:shadow-lg transition"
+>
+  <h2 className="text-xl font-bold mb-2">
+    💰 Premiação / Financeiro
+  </h2>
+
+  <p>
+    Consulte pagamentos, arrecadação e premiação.
+  </p>
+</Link>
+
 </div>
 
-      <div className="grid md:grid-cols-3 gap-4 mb-8">
+      <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
         <div className="bg-white rounded-xl shadow p-6">
           <h2 className="text-lg font-bold">👥 Participantes</h2>
           <p className="text-4xl font-bold mt-2">{participantes}</p>
