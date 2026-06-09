@@ -23,7 +23,7 @@ export default function PalpitesPage() {
       return
     }
 
-    const { data: jogosData } = await supabase
+    const { data: jogosData, error: jogosError } = await supabase
       .from('matches')
       .select(`
         id,
@@ -35,6 +35,12 @@ export default function PalpitesPage() {
         team2:teams!matches_team2_id_fkey(nome)
       `)
       .order('match_number')
+
+      if (jogosError) {
+  setMensagem('Erro ao carregar jogos: ' + jogosError.message)
+  setLoading(false)
+  return
+}
 
     const { data: palpitesData } = await supabase
       .from('match_predictions')
@@ -131,9 +137,10 @@ if (rankingError) {
               Jogo {jogo.match_number}
             </h2>
 
-            <p className="mb-2">
-              {jogo.team1?.nome} x {jogo.team2?.nome}
-            </p>
+            <p className="mb-2 font-semibold">
+  {jogo.team1?.nome || 'Seleção 1 não carregada'} x{' '}
+  {jogo.team2?.nome || 'Seleção 2 não carregada'}
+</p>
 
             <p className="text-sm text-gray-600 mb-4">
               {new Date(jogo.data_hora).toLocaleString('pt-BR')}
@@ -147,7 +154,7 @@ if (rankingError) {
                   onChange={() => salvarPalpite(jogo.id, 'team1')}
                   disabled={new Date() >= PRAZO_FINAL}
                 />{' '}
-                Vitória {jogo.team1?.nome}
+                Vitória {jogo.team1?.nome || 'Seleção 1'}
               </label>
 
               <label>
@@ -167,7 +174,7 @@ if (rankingError) {
                   onChange={() => salvarPalpite(jogo.id, 'team2')}
                   disabled={new Date() >= PRAZO_FINAL}
                 />{' '}
-                Vitória {jogo.team2?.nome}
+                Vitória {jogo.team2?.nome || 'Seleção 2'}
               </label>
             </div>
           </div>
