@@ -156,6 +156,19 @@ export default function AdminPage() {
     Baixar participantes, ranking e palpites em CSV.
   </p>
 </Link>
+
+<Link
+  href="/admin/participantes"
+  className="bg-white p-6 rounded-xl shadow hover:shadow-lg"
+>
+  <h2 className="text-xl font-bold mb-2">
+    👥 Participantes
+  </h2>
+
+  <p>
+    Editar nomes e permissões dos participantes.
+  </p>
+</Link>
       </div>
     </main>
   )
