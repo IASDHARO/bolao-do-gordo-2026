@@ -73,6 +73,28 @@ const [novaSenha, setNovaSenha] = useState('')
     return <main className="p-8">Carregando...</main>
   }
 
+  async function copiarConvite(email: string, nome: string) {
+  const linkBolao = window.location.origin
+
+  const texto = `Olá, ${nome || ''}!
+
+Você foi convidado para participar do Bolão do Gordo - Copa do Mundo 2026.
+
+Acesse:
+${linkBolao}
+
+E-mail:
+${email}
+
+Use a senha provisória informada pelo administrador.
+
+Boa sorte! ⚽🏆`
+
+  await navigator.clipboard.writeText(texto)
+
+  setMensagem('✅ Convite copiado para a área de transferência')
+}
+
   async function criarParticipante() {
   setMensagem('Criando participante...')
 
@@ -210,20 +232,31 @@ const [novaSenha, setNovaSenha] = useState('')
                 </td>
 
                 <td className="p-3 text-center">
-                  <button
-                    onClick={() =>
-                      alterarAdmin(p.id, !p.is_admin)
-                    }
-                    className={
-                      p.is_admin
-                        ? 'bg-red-600 text-white px-3 py-2 rounded-lg'
-                        : 'bg-blue-600 text-white px-3 py-2 rounded-lg'
-                    }
-                  >
-                    {p.is_admin
-                      ? 'Remover Admin'
-                      : 'Tornar Admin'}
-                  </button>
+                  <div className="flex gap-2 justify-center">
+  <button
+    onClick={() =>
+      alterarAdmin(p.id, !p.is_admin)
+    }
+    className={
+      p.is_admin
+        ? 'bg-red-600 text-white px-3 py-2 rounded-lg'
+        : 'bg-blue-600 text-white px-3 py-2 rounded-lg'
+    }
+  >
+    {p.is_admin
+      ? 'Remover Admin'
+      : 'Tornar Admin'}
+  </button>
+
+  <button
+    onClick={() =>
+      copiarConvite(p.email, p.nome)
+    }
+    className="bg-green-600 text-white px-3 py-2 rounded-lg"
+  >
+    📱 Copiar Convite
+  </button>
+</div>
                 </td>
               </tr>
             ))}
