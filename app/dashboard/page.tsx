@@ -117,6 +117,11 @@ export default function DashboardPage() {
     setLoading(false)
   }
 
+async function sair() {
+  await supabase.auth.signOut()
+  window.location.href = '/'
+}
+
   function podeVerResumo() {
     return isAdmin || new Date() >= PRAZO_FINAL
   }
@@ -148,9 +153,18 @@ export default function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-green-200 via-yellow-100 to-blue-200 p-8">
-      <h1 className="text-4xl font-bold mb-8">
-        📊 Dashboard do Bolão
-      </h1>
+      <div className="flex justify-between items-center mb-8">
+  <h1 className="text-4xl font-bold">
+    📊 Dashboard do Bolão
+  </h1>
+
+  <button
+    onClick={sair}
+    className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+  >
+    Sair
+  </button>
+</div>
       <div className="grid md:grid-cols-4 gap-4 mb-8">
 
   <Link
