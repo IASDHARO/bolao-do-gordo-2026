@@ -56,6 +56,24 @@ export default function Home() {
     window.location.href = '/dashboard'
   }
 
+  async function esqueciSenha() {
+  if (!email) {
+    setMensagem('Informe seu e-mail primeiro.')
+    return
+  }
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/redefinir-senha`,
+  })
+
+  if (error) {
+    setMensagem('Erro ao enviar recuperação: ' + error.message)
+    return
+  }
+
+  setMensagem('✅ Enviamos um link de recuperação para seu e-mail.')
+}
+
   return (
     <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-green-200 via-yellow-100 to-blue-200">
       <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
@@ -98,6 +116,13 @@ export default function Home() {
           >
             Entrar
           </button>
+
+          <button
+  onClick={esqueciSenha}
+  className="w-full text-sm text-blue-600 underline"
+>
+  Esqueci minha senha
+</button>
 
           {mensagem && (
             <div className="text-center text-sm">
