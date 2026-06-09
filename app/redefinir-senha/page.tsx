@@ -6,10 +6,26 @@ import { supabase } from '../../lib/supabase'
 export default function RedefinirSenhaPage() {
   const [novaSenha, setNovaSenha] = useState('')
   const [confirmarSenha, setConfirmarSenha] = useState('')
-  const [mensagem, setMensagem] = useState('')
+  const [mensagem, setMensagem] = useState('Carregando link de recuperação...')
 
   useEffect(() => {
-    supabase.auth.getSession()
+    async function iniciarRecuperacao() {
+      const params = new URLSearchParams(window.location.search)
+      const code = params.get('code')
+
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code)
+
+        if (error) {
+          setMensagem('Link inválido ou expirado. Solicite uma nova recuperação.')
+          return
+        }
+      }
+
+      setMensagem('')
+    }
+
+    iniciarRecuperacao()
   }, [])
 
   async function salvarSenha() {
