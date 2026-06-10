@@ -92,14 +92,7 @@ export default function PalpitesPage() {
       setMensagem('Erro ao salvar palpite: ' + error.message)
       return
     }
-
-    const { error: rankingError } = await supabase.rpc('atualizar_ranking')
-
-if (rankingError) {
-  setMensagem('Palpite salvo, mas erro ao atualizar ranking: ' + rankingError.message)
-  return
-}
-
+    
     setMensagem('✅ Palpite salvo com sucesso')
   }
 
