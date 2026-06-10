@@ -83,11 +83,11 @@ export default function FinanceiroPage() {
         return {
           ...usuario,
           palpitesJogosCompletos:
-            totalJogos > 0 &&
-            totalPalpitesJogos === totalJogos,
+            (totalJogos || 0) > 0 &&
+totalPalpitesJogos === (totalJogos || 0),
           palpitesGruposCompletos:
-            totalGrupos > 0 &&
-            totalPalpitesGrupos === totalGrupos,
+            (totalGrupos || 0) > 0 &&
+totalPalpitesGrupos === (totalGrupos || 0),
           totalPalpitesJogos,
           totalPalpitesGrupos,
         }
