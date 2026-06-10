@@ -12,6 +12,8 @@ export default function FinanceiroPage() {
   const [competicaoFinalizada, setCompeticaoFinalizada] = useState(false)
   const [mensagem, setMensagem] = useState('')
   const [loading, setLoading] = useState(true)
+  const [totalJogosSistema, setTotalJogosSistema] = useState(0)
+const [totalGruposSistema, setTotalGruposSistema] = useState(0)
 
   useEffect(() => {
     carregarDados()
@@ -60,6 +62,9 @@ export default function FinanceiroPage() {
       .from('group_results')
       .select('*', { count: 'exact', head: true })
 
+    setTotalJogosSistema(totalJogos || 0)
+    setTotalGruposSistema(totalGrupos || 0)
+      
     const { data: statusPalpitesData } = await supabase
   .rpc('status_palpites_participantes')
 
@@ -120,6 +125,12 @@ totalPalpitesGrupos === (totalGrupos || 0),
     })
   }
 
+  function percentual(valor: number, total: number) {
+  if (!total) return 0
+
+  return Math.round((valor / total) * 100)
+}
+  
   const totalParticipantes = usuarios.length
   const totalArrecadado = totalParticipantes * VALOR_TAXA
 
@@ -296,17 +307,63 @@ totalPalpitesGrupos === (totalGrupos || 0),
                   {usuario.email}
                 </td>
 
-                <td className="p-3 text-center font-bold">
-                  {usuario.palpitesJogosCompletos
-                    ? '✅ Completo'
-                    : `❌ ${usuario.totalPalpitesJogos}`}
-                </td>
+                <td className="p-3 min-w-[180px]">
+  <div className="text-center font-bold mb-1">
+    {usuario.totalPalpitesJogos}/{totalJogosSistema}
+  </div>
 
-                <td className="p-3 text-center font-bold">
-                  {usuario.palpitesGruposCompletos
-                    ? '✅ Completo'
-                    : `❌ ${usuario.totalPalpitesGrupos}`}
-                </td>
+  <div className="w-full bg-gray-200 rounded-full h-3">
+    <div
+      className={
+        usuario.palpitesJogosCompletos
+          ? 'bg-green-600 h-3 rounded-full'
+          : 'bg-yellow-500 h-3 rounded-full'
+      }
+      style={{
+        width: `${percentual(
+          usuario.totalPalpitesJogos,
+          totalJogosSistema
+        )}%`,
+      }}
+    />
+  </div>
+
+  <div className="text-xs text-center mt-1">
+    {percentual(
+      usuario.totalPalpitesJogos,
+      totalJogosSistema
+    )}%
+  </div>
+</td>
+
+                <td className="p-3 min-w-[180px]">
+  <div className="text-center font-bold mb-1">
+    {usuario.totalPalpitesGrupos}/{totalGruposSistema}
+  </div>
+
+  <div className="w-full bg-gray-200 rounded-full h-3">
+    <div
+      className={
+        usuario.palpitesGruposCompletos
+          ? 'bg-green-600 h-3 rounded-full'
+          : 'bg-yellow-500 h-3 rounded-full'
+      }
+      style={{
+        width: `${percentual(
+          usuario.totalPalpitesGrupos,
+          totalGruposSistema
+        )}%`,
+      }}
+    />
+  </div>
+
+  <div className="text-xs text-center mt-1">
+    {percentual(
+      usuario.totalPalpitesGrupos,
+      totalGruposSistema
+    )}%
+  </div>
+</td>
 
                 <td className="p-3 text-center font-bold">
                   {usuario.taxa_paga ? '✅ Pago' : '❌ Pendente'}
