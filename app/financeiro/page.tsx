@@ -60,25 +60,17 @@ export default function FinanceiroPage() {
       .from('group_results')
       .select('*', { count: 'exact', head: true })
 
-    const { data: palpitesJogosData } = await supabase
-      .from('match_predictions')
-      .select('user_id, match_id')
-
-    const { data: palpitesGruposData } = await supabase
-      .from('group_predictions')
-      .select('user_id, group_id')
+    const { data: statusPalpitesData } = await supabase
+  .rpc('status_palpites_participantes')
 
     const usuariosComStatus =
       (usuariosData || []).map((usuario: any) => {
-        const totalPalpitesJogos =
-          palpitesJogosData?.filter(
-            (p: any) => p.user_id === usuario.id
-          ).length || 0
+        const status = statusPalpitesData?.find(
+  (s: any) => s.user_id === usuario.id
+)
 
-        const totalPalpitesGrupos =
-          palpitesGruposData?.filter(
-            (p: any) => p.user_id === usuario.id
-          ).length || 0
+const totalPalpitesJogos = status?.palpites_jogos || 0
+const totalPalpitesGrupos = status?.palpites_grupos || 0
 
         return {
           ...usuario,
