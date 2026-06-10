@@ -60,7 +60,40 @@ export default function FinanceiroPage() {
       .from('group_results')
       .select('*', { count: 'exact', head: true })
 
-    setUsuarios(usuariosData || [])
+    const { data: palpitesJogosData } = await supabase
+      .from('match_predictions')
+      .select('user_id, match_id')
+
+    const { data: palpitesGruposData } = await supabase
+      .from('group_predictions')
+      .select('user_id, group_id')
+
+    const usuariosComStatus =
+      (usuariosData || []).map((usuario: any) => {
+        const totalPalpitesJogos =
+          palpitesJogosData?.filter(
+            (p: any) => p.user_id === usuario.id
+          ).length || 0
+
+        const totalPalpitesGrupos =
+          palpitesGruposData?.filter(
+            (p: any) => p.user_id === usuario.id
+          ).length || 0
+
+        return {
+          ...usuario,
+          palpitesJogosCompletos:
+            totalJogos > 0 &&
+            totalPalpitesJogos === totalJogos,
+          palpitesGruposCompletos:
+            totalGrupos > 0 &&
+            totalPalpitesGrupos === totalGrupos,
+          totalPalpitesJogos,
+          totalPalpitesGrupos,
+        }
+      })
+
+    setUsuarios(usuariosComStatus)
     setRanking(rankingData || [])
 
     setCompeticaoFinalizada(
@@ -251,6 +284,8 @@ export default function FinanceiroPage() {
             <tr>
               <th className="p-3 text-left">Participante</th>
               <th className="p-3 text-left">E-mail</th>
+              <th className="p-3 text-center">Palpites Jogos</th>
+              <th className="p-3 text-center">Palpites Grupos</th>
               <th className="p-3 text-center">Taxa paga?</th>
               {isAdmin && (
                 <th className="p-3 text-center">Ações</th>
@@ -267,6 +302,18 @@ export default function FinanceiroPage() {
 
                 <td className="p-3">
                   {usuario.email}
+                </td>
+
+                <td className="p-3 text-center font-bold">
+                  {usuario.palpitesJogosCompletos
+                    ? '✅ Completo'
+                    : `❌ ${usuario.totalPalpitesJogos}`}
+                </td>
+
+                <td className="p-3 text-center font-bold">
+                  {usuario.palpitesGruposCompletos
+                    ? '✅ Completo'
+                    : `❌ ${usuario.totalPalpitesGrupos}`}
                 </td>
 
                 <td className="p-3 text-center font-bold">
