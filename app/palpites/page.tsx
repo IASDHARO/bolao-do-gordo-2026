@@ -159,46 +159,46 @@ export default function PalpitesPage() {
               Jogo {jogo.match_number}
             </h2>
 
-            <p className="mb-2 font-semibold">
-              {jogo.team1?.nome || 'Seleção 1 não carregada'} x{' '}
-              {jogo.team2?.nome || 'Seleção 2 não carregada'}
-            </p>
+            <p className="mb-2 font-semibold" translate="no">
+  {jogo.team1?.nome || 'Seleção 1 não carregada'} x{' '}
+  {jogo.team2?.nome || 'Seleção 2 não carregada'}
+</p>
 
             <p className="text-sm text-gray-600 mb-4">
               {new Date(jogo.data_hora).toLocaleString('pt-BR')}
             </p>
 
             <div className="flex flex-col gap-2">
-              <label>
-                <input
-                  type="radio"
-                  checked={palpites[jogo.id] === 'team1'}
-                  onChange={() => salvarPalpite(jogo.id, 'team1')}
-                  disabled={new Date() >= PRAZO_FINAL}
-                />{' '}
-                Vitória {jogo.team1?.nome || 'Seleção 1'}
-              </label>
+  <label translate="no">
+    <input
+      type="radio"
+      checked={palpites[jogo.id] === 'team1'}
+      onChange={() => salvarPalpite(jogo.id, 'team1')}
+      disabled={new Date() >= PRAZO_FINAL}
+    />{' '}
+    Vitória {jogo.team1?.nome || 'Seleção 1'}
+  </label>
 
-              <label>
-                <input
-                  type="radio"
-                  checked={palpites[jogo.id] === 'draw'}
-                  onChange={() => salvarPalpite(jogo.id, 'draw')}
-                  disabled={new Date() >= PRAZO_FINAL}
-                />{' '}
-                Empate
-              </label>
+  <label translate="no">
+    <input
+      type="radio"
+      checked={palpites[jogo.id] === 'draw'}
+      onChange={() => salvarPalpite(jogo.id, 'draw')}
+      disabled={new Date() >= PRAZO_FINAL}
+    />{' '}
+    Empate
+  </label>
 
-              <label>
-                <input
-                  type="radio"
-                  checked={palpites[jogo.id] === 'team2'}
-                  onChange={() => salvarPalpite(jogo.id, 'team2')}
-                  disabled={new Date() >= PRAZO_FINAL}
-                />{' '}
-                Vitória {jogo.team2?.nome || 'Seleção 2'}
-              </label>
-            </div>
+  <label translate="no">
+    <input
+      type="radio"
+      checked={palpites[jogo.id] === 'team2'}
+      onChange={() => salvarPalpite(jogo.id, 'team2')}
+      disabled={new Date() >= PRAZO_FINAL}
+    />{' '}
+    Vitória {jogo.team2?.nome || 'Seleção 2'}
+  </label>
+</div>
           </div>
         ))}
       </div>
