@@ -31,16 +31,43 @@ export default function PalpitesPage() {
         data_hora,
         local,
         encerrado,
-        team1:teams!matches_team1_id_fkey(nome),
-        team2:teams!matches_team2_id_fkey(nome)
+        team1_id,
+        team2_id
       `)
       .order('match_number')
 
-      if (jogosError) {
-  setMensagem('Erro ao carregar jogos: ' + jogosError.message)
-  setLoading(false)
-  return
-}
+    if (jogosError) {
+      setMensagem('Erro ao carregar jogos: ' + jogosError.message)
+      setLoading(false)
+      return
+    }
+
+    const { data: timesData, error: timesError } = await supabase
+      .from('teams')
+      .select('id,nome')
+
+    if (timesError) {
+      setMensagem('Erro ao carregar seleções: ' + timesError.message)
+      setLoading(false)
+      return
+    }
+
+    const jogosComTimes =
+      (jogosData || []).map((jogo: any) => {
+        const time1 = timesData?.find(
+          (time: any) => time.id === jogo.team1_id
+        )
+
+        const time2 = timesData?.find(
+          (time: any) => time.id === jogo.team2_id
+        )
+
+        return {
+          ...jogo,
+          team1: time1 || null,
+          team2: time2 || null,
+        }
+      })
 
     const { data: palpitesData } = await supabase
       .from('match_predictions')
@@ -53,7 +80,7 @@ export default function PalpitesPage() {
       mapa[p.match_id] = p.prediction
     })
 
-    setJogos(jogosData || [])
+    setJogos(jogosComTimes)
     setPalpites(mapa)
     setLoading(false)
   }
@@ -65,44 +92,46 @@ export default function PalpitesPage() {
       setMensagem('Você precisa estar logado.')
       return
     }
+
     if (new Date() >= PRAZO_FINAL) {
-  setMensagem('⛔ O prazo para envio ou alteração dos palpites terminou.')
-  return
-}
+      setMensagem('⛔ O prazo para envio ou alteração dos palpites terminou.')
+      return
+    }
 
     setPalpites((atual) => ({
       ...atual,
       [matchId]: prediction,
     }))
 
- const { error } = await supabase
-  .from('match_predictions')
-  .upsert(
-    {
-      user_id: auth.user.id,
-      match_id: matchId,
-      prediction,
-    },
-    {
-      onConflict: 'user_id,match_id',
-    }
-  )
+    const { error } = await supabase
+      .from('match_predictions')
+      .upsert(
+        {
+          user_id: auth.user.id,
+          match_id: matchId,
+          prediction,
+        },
+        {
+          onConflict: 'user_id,match_id',
+        }
+      )
 
     if (error) {
       setMensagem('Erro ao salvar palpite: ' + error.message)
       return
     }
-    
+
     setMensagem('✅ Palpite salvo com sucesso')
+  }
+
+  async function sair() {
+    await supabase.auth.signOut()
+    window.location.href = '/'
   }
 
   if (loading) {
     return <main className="p-8">Carregando...</main>
   }
-  async function sair() {
-  await supabase.auth.signOut()
-  window.location.href = '/'
-}
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-green-200 via-yellow-100 to-blue-200 p-8">
@@ -111,11 +140,11 @@ export default function PalpitesPage() {
       </h1>
 
       <button
-  onClick={sair}
-  className="bg-red-600 text-white px-4 py-2 rounded-lg mb-6"
->
-  Sair
-</button>
+        onClick={sair}
+        className="bg-red-600 text-white px-4 py-2 rounded-lg mb-6"
+      >
+        Sair
+      </button>
 
       {mensagem && (
         <div className="bg-white p-3 rounded-lg shadow mb-4">
@@ -131,9 +160,9 @@ export default function PalpitesPage() {
             </h2>
 
             <p className="mb-2 font-semibold">
-  {jogo.team1?.nome || 'Seleção 1 não carregada'} x{' '}
-  {jogo.team2?.nome || 'Seleção 2 não carregada'}
-</p>
+              {jogo.team1?.nome || 'Seleção 1 não carregada'} x{' '}
+              {jogo.team2?.nome || 'Seleção 2 não carregada'}
+            </p>
 
             <p className="text-sm text-gray-600 mb-4">
               {new Date(jogo.data_hora).toLocaleString('pt-BR')}
