@@ -34,7 +34,8 @@ export default function ApostasPage() {
     setIsAdmin(!!usuario?.is_admin)
 
     const { data: apostasData, error: apostasError } = await supabase
-      .rpc('apostas_dos_participantes')
+     .rpc('apostas_dos_participantes')
+     .range(0, 10000)
 
     if (apostasError) {
       setMensagem(
