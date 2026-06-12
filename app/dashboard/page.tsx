@@ -118,20 +118,35 @@ setMeusPontos(meuRanking?.pontos || 0)
       .order('pontos', { ascending: false })
       .limit(10)
 
-    const { data: jogosData } = await supabase
-      .from('matches')
-      .select(`
-        id,
-        match_number,
-        data_hora,
-        team1:teams!matches_team1_id_fkey(nome),
-        team2:teams!matches_team2_id_fkey(nome)
-      `)
-      .order('match_number')
+    const { data: resumoData } = await supabase
+  .rpc('resumo_palpites_jogos')
 
-    const { data: palpitesData } = await supabase
-      .from('match_predictions')
-      .select('match_id, prediction')
+const resumo = (resumoData || []).map((jogo: any) => {
+  const totalPalpites =
+    jogo.total_team1 +
+    jogo.total_draw +
+    jogo.total_team2
+
+  return {
+    id: jogo.match_id,
+    match_number: jogo.match_number,
+    data_hora: jogo.data_hora,
+    team1: { nome: jogo.team1_nome },
+    team2: { nome: jogo.team2_nome },
+    totalTeam1: jogo.total_team1,
+    totalDraw: jogo.total_draw,
+    totalTeam2: jogo.total_team2,
+    percentualTeam1: totalPalpites
+      ? Math.round((jogo.total_team1 / totalPalpites) * 100)
+      : 0,
+    percentualDraw: totalPalpites
+      ? Math.round((jogo.total_draw / totalPalpites) * 100)
+      : 0,
+    percentualTeam2: totalPalpites
+      ? Math.round((jogo.total_team2 / totalPalpites) * 100)
+      : 0,
+  }
+})
 
     const resumo = (jogosData || []).map((jogo: any) => {
       const palpitesDoJogo =
@@ -221,8 +236,8 @@ async function sair() {
 
       const passaData = !filtroData || dataJogo === filtroData
       const passaJogo =
-        !filtroJogo ||
-        textoJogo.includes(filtroJogo.toLowerCase())
+  !filtroJogo ||
+  String(jogo.match_number) === filtroJogo
 
       return passaData && passaJogo
     })
@@ -509,13 +524,22 @@ async function sair() {
               className="border p-2 rounded-lg"
             />
 
-            <input
-              type="text"
-              placeholder="Filtrar por jogo ou seleção..."
-              value={filtroJogo}
-              onChange={(e) => setFiltroJogo(e.target.value)}
-              className="border p-2 rounded-lg"
-            />
+            <select
+  value={filtroJogo}
+  onChange={(e) => setFiltroJogo(e.target.value)}
+  className="border p-2 rounded-lg bg-white"
+>
+  <option value="">Todos os jogos</option>
+
+  {resumoJogos.map((jogo: any) => (
+    <option
+      key={jogo.id}
+      value={String(jogo.match_number)}
+    >
+      Jogo {jogo.match_number}: {jogo.team1?.nome} x {jogo.team2?.nome}
+    </option>
+  ))}
+</select>
           </div>
 
           <div className="grid gap-4">
