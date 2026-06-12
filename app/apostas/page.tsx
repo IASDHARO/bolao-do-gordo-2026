@@ -53,12 +53,12 @@ export default function ApostasPage() {
   }
 
   function traduzirPalpite(prediction: string, item: any) {
-    if (prediction === 'team1') return item.team1_nome || 'Time 1'
-    if (prediction === 'team2') return item.team2_nome || 'Time 2'
-    if (prediction === 'draw') return 'Empate'
+  if (prediction === 'team1') return item.team1_nome || 'Time 1'
+  if (prediction === 'team2') return item.team2_nome || 'Time 2'
+  if (prediction === 'draw') return 'Empate'
 
-    return '-'
-  }
+  return 'Não fez palpite'
+}
 
   function apostasFiltradas() {
   return apostas.filter((item: any) => {
