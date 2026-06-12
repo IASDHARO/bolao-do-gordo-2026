@@ -148,40 +148,35 @@ const resumo = (resumoData || []).map((jogo: any) => {
   }
 })
 
-    const resumo = (jogosData || []).map((jogo: any) => {
-      const palpitesDoJogo =
-        palpitesData?.filter((p: any) => p.match_id === jogo.id) || []
+    const { data: resumoData } = await supabase
+  .rpc('resumo_palpites_jogos')
 
-      const totalTeam1 = palpitesDoJogo.filter(
-        (p: any) => p.prediction === 'team1'
-      ).length
+const resumo = (resumoData || []).map((jogo: any) => {
+  const totalPalpites =
+    jogo.total_team1 +
+    jogo.total_draw +
+    jogo.total_team2
 
-      const totalDraw = palpitesDoJogo.filter(
-        (p: any) => p.prediction === 'draw'
-      ).length
-
-      const totalTeam2 = palpitesDoJogo.filter(
-        (p: any) => p.prediction === 'team2'
-      ).length
-
-      const totalPalpites = totalTeam1 + totalDraw + totalTeam2
-
-      return {
-        ...jogo,
-        totalTeam1,
-        totalDraw,
-        totalTeam2,
-        percentualTeam1: totalPalpites
-          ? Math.round((totalTeam1 / totalPalpites) * 100)
-          : 0,
-        percentualDraw: totalPalpites
-          ? Math.round((totalDraw / totalPalpites) * 100)
-          : 0,
-        percentualTeam2: totalPalpites
-          ? Math.round((totalTeam2 / totalPalpites) * 100)
-          : 0,
-      }
-    })
+  return {
+    id: jogo.match_id,
+    match_number: jogo.match_number,
+    data_hora: jogo.data_hora,
+    team1: { nome: jogo.team1_nome },
+    team2: { nome: jogo.team2_nome },
+    totalTeam1: jogo.total_team1,
+    totalDraw: jogo.total_draw,
+    totalTeam2: jogo.total_team2,
+    percentualTeam1: totalPalpites
+      ? Math.round((jogo.total_team1 / totalPalpites) * 100)
+      : 0,
+    percentualDraw: totalPalpites
+      ? Math.round((jogo.total_draw / totalPalpites) * 100)
+      : 0,
+    percentualTeam2: totalPalpites
+      ? Math.round((jogo.total_team2 / totalPalpites) * 100)
+      : 0,
+  }
+})
 
     setParticipantes(totalUsuarios || 0)
     setPalpitesJogos(totalJogos || 0)
