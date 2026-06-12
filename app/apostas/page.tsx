@@ -61,33 +61,18 @@ export default function ApostasPage() {
   }
 
   function apostasFiltradas() {
-    return apostas.filter((item: any) => {
-      const participante =
-        `
-          ${item.participante_nome || ''}
-          ${item.participante_email || ''}
-        `.toLowerCase()
+  return apostas.filter((item: any) => {
+    const passaParticipante =
+      !filtroParticipante ||
+      item.participante_email === filtroParticipante
 
-      const jogo =
-        `
-          ${item.match_number}
-          ${item.team1_nome || ''}
-          ${item.team2_nome || ''}
-        `.toLowerCase()
+    const passaJogo =
+      !filtroJogo ||
+      String(item.match_number) === filtroJogo
 
-      const passaParticipante =
-        !filtroParticipante ||
-        participante.includes(
-          filtroParticipante.toLowerCase()
-        )
-
-      const passaJogo =
-        !filtroJogo ||
-        jogo.includes(filtroJogo.toLowerCase())
-
-      return passaParticipante && passaJogo
-    })
-  }
+    return passaParticipante && passaJogo
+  })
+}
 
   if (loading) {
     return <main className="p-8">Carregando...</main>
@@ -122,27 +107,72 @@ export default function ApostasPage() {
         </div>
       )}
 
-      <div className="grid md:grid-cols-2 gap-3 mb-6">
-        <input
-          type="text"
-          placeholder="Filtrar participante..."
-          value={filtroParticipante}
-          onChange={(e) =>
-            setFiltroParticipante(e.target.value)
-          }
-          className="border p-3 rounded-lg"
-        />
+      <div className="grid md:grid-cols-3 gap-3 mb-6">
+  <select
+    value={filtroParticipante}
+    onChange={(e) =>
+      setFiltroParticipante(e.target.value)
+    }
+    className="border p-3 rounded-lg bg-white"
+  >
+    <option value="">Todos os participantes</option>
 
-        <input
-          type="text"
-          placeholder="Filtrar jogo..."
-          value={filtroJogo}
-          onChange={(e) =>
-            setFiltroJogo(e.target.value)
-          }
-          className="border p-3 rounded-lg"
-        />
-      </div>
+    {Array.from(
+      new Map(
+        apostas.map((item: any) => [
+          item.participante_email,
+          item.participante_nome ||
+            item.participante_email,
+        ])
+      )
+    )
+      .sort((a: any, b: any) =>
+        String(a[1]).localeCompare(String(b[1]))
+      )
+      .map(([email, nome]: any) => (
+        <option key={email} value={email}>
+          {nome}
+        </option>
+      ))}
+  </select>
+
+  <select
+    value={filtroJogo}
+    onChange={(e) =>
+      setFiltroJogo(e.target.value)
+    }
+    className="border p-3 rounded-lg bg-white"
+  >
+    <option value="">Todos os jogos</option>
+
+    {Array.from(
+      new Map(
+        apostas.map((item: any) => [
+          item.match_number,
+          `Jogo ${item.match_number}: ${
+            item.team1_nome || 'Time 1'
+          } x ${item.team2_nome || 'Time 2'}`,
+        ])
+      )
+    )
+      .sort((a: any, b: any) => Number(a[0]) - Number(b[0]))
+      .map(([matchNumber, descricao]: any) => (
+        <option key={matchNumber} value={String(matchNumber)}>
+          {descricao}
+        </option>
+      ))}
+  </select>
+
+  <button
+    onClick={() => {
+      setFiltroParticipante('')
+      setFiltroJogo('')
+    }}
+    className="bg-gray-700 text-white p-3 rounded-lg"
+  >
+    Limpar filtros
+  </button>
+</div>
 
       <div className="bg-white rounded-xl shadow overflow-auto">
         <table className="w-full">
