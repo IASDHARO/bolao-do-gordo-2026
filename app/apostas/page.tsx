@@ -9,6 +9,7 @@ export default function ApostasPage() {
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   const [apostas, setApostas] = useState<any[]>([])
+  const [jogosFiltro, setJogosFiltro] = useState<any[]>([])
   const [filtroParticipante, setFiltroParticipante] = useState('')
   const [filtroJogo, setFiltroJogo] = useState('')
   const [mensagem, setMensagem] = useState('')
@@ -33,9 +34,21 @@ export default function ApostasPage() {
 
     setIsAdmin(!!usuario?.is_admin)
 
+    const { data: jogosFiltroData } = await supabase
+      .from('matches')
+      .select(`
+        id,
+        match_number,
+        team1:teams!matches_team1_id_fkey(nome),
+        team2:teams!matches_team2_id_fkey(nome)
+      `)
+      .order('match_number')
+
+    setJogosFiltro(jogosFiltroData || [])
+
     const { data: apostasData, error: apostasError } = await supabase
-     .rpc('apostas_dos_participantes')
-     .range(0, 10000)
+      .rpc('apostas_dos_participantes')
+      .range(0, 10000)
 
     if (apostasError) {
       setMensagem(
@@ -54,26 +67,26 @@ export default function ApostasPage() {
   }
 
   function traduzirPalpite(prediction: string, item: any) {
-  if (prediction === 'team1') return item.team1_nome || 'Time 1'
-  if (prediction === 'team2') return item.team2_nome || 'Time 2'
-  if (prediction === 'draw') return 'Empate'
+    if (prediction === 'team1') return item.team1_nome || 'Time 1'
+    if (prediction === 'team2') return item.team2_nome || 'Time 2'
+    if (prediction === 'draw') return 'Empate'
 
-  return 'Não fez palpite'
-}
+    return 'Não fez palpite'
+  }
 
   function apostasFiltradas() {
-  return apostas.filter((item: any) => {
-    const passaParticipante =
-      !filtroParticipante ||
-      item.participante_email === filtroParticipante
+    return apostas.filter((item: any) => {
+      const passaParticipante =
+        !filtroParticipante ||
+        item.participante_email === filtroParticipante
 
-    const passaJogo =
-      !filtroJogo ||
-      String(item.match_number) === filtroJogo
+      const passaJogo =
+        !filtroJogo ||
+        String(item.match_number) === filtroJogo
 
-    return passaParticipante && passaJogo
-  })
-}
+      return passaParticipante && passaJogo
+    })
+  }
 
   if (loading) {
     return <main className="p-8">Carregando...</main>
@@ -109,71 +122,63 @@ export default function ApostasPage() {
       )}
 
       <div className="grid md:grid-cols-3 gap-3 mb-6">
-  <select
-    value={filtroParticipante}
-    onChange={(e) =>
-      setFiltroParticipante(e.target.value)
-    }
-    className="border p-3 rounded-lg bg-white"
-  >
-    <option value="">Todos os participantes</option>
+        <select
+          value={filtroParticipante}
+          onChange={(e) =>
+            setFiltroParticipante(e.target.value)
+          }
+          className="border p-3 rounded-lg bg-white"
+        >
+          <option value="">Todos os participantes</option>
 
-    {Array.from(
-      new Map(
-        apostas.map((item: any) => [
-          item.participante_email,
-          item.participante_nome ||
-            item.participante_email,
-        ])
-      )
-    )
-      .sort((a: any, b: any) =>
-        String(a[1]).localeCompare(String(b[1]))
-      )
-      .map(([email, nome]: any) => (
-        <option key={email} value={email}>
-          {nome}
-        </option>
-      ))}
-  </select>
+          {Array.from(
+            new Map(
+              apostas.map((item: any) => [
+                item.participante_email,
+                item.participante_nome ||
+                  item.participante_email,
+              ])
+            )
+          )
+            .sort((a: any, b: any) =>
+              String(a[1]).localeCompare(String(b[1]))
+            )
+            .map(([email, nome]: any) => (
+              <option key={email} value={email}>
+                {nome}
+              </option>
+            ))}
+        </select>
 
-  <select
-    value={filtroJogo}
-    onChange={(e) =>
-      setFiltroJogo(e.target.value)
-    }
-    className="border p-3 rounded-lg bg-white"
-  >
-    <option value="">Todos os jogos</option>
+        <select
+          value={filtroJogo}
+          onChange={(e) =>
+            setFiltroJogo(e.target.value)
+          }
+          className="border p-3 rounded-lg bg-white"
+        >
+          <option value="">Todos os jogos</option>
 
-    {Array.from(
-      new Map(
-        apostas.map((item: any) => [
-          item.match_number,
-          `Jogo ${item.match_number}: ${
-            item.team1_nome || 'Time 1'
-          } x ${item.team2_nome || 'Time 2'}`,
-        ])
-      )
-    )
-      .sort((a: any, b: any) => Number(a[0]) - Number(b[0]))
-      .map(([matchNumber, descricao]: any) => (
-        <option key={matchNumber} value={String(matchNumber)}>
-          {descricao}
-        </option>
-      ))}
-  </select>
+          {jogosFiltro.map((jogo: any) => (
+            <option
+              key={jogo.id}
+              value={String(jogo.match_number)}
+            >
+              Jogo {jogo.match_number}: {jogo.team1?.nome} x {jogo.team2?.nome}
+            </option>
+          ))}
+        </select>
 
-  <button
-    onClick={() => {
-      setFiltroParticipante('')
-      setFiltroJogo('')
-    }}
-    className="bg-gray-700 text-white p-3 rounded-lg"
-  >
-    Limpar filtros
-  </button>
-</div>
+        <button
+          onClick={() => {
+            setFiltroParticipante('')
+            setFiltroJogo('')
+          }}
+          className="bg-gray-700 text-white p-3 rounded-lg"
+        >
+          Limpar filtros
+        </button>
+      </div>
 
       <div className="bg-white rounded-xl shadow overflow-auto">
         <table className="w-full">
