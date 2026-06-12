@@ -147,37 +147,7 @@ const resumo = (resumoData || []).map((jogo: any) => {
       : 0,
   }
 })
-
-    const { data: resumoData } = await supabase
-  .rpc('resumo_palpites_jogos')
-
-const resumo = (resumoData || []).map((jogo: any) => {
-  const totalPalpites =
-    jogo.total_team1 +
-    jogo.total_draw +
-    jogo.total_team2
-
-  return {
-    id: jogo.match_id,
-    match_number: jogo.match_number,
-    data_hora: jogo.data_hora,
-    team1: { nome: jogo.team1_nome },
-    team2: { nome: jogo.team2_nome },
-    totalTeam1: jogo.total_team1,
-    totalDraw: jogo.total_draw,
-    totalTeam2: jogo.total_team2,
-    percentualTeam1: totalPalpites
-      ? Math.round((jogo.total_team1 / totalPalpites) * 100)
-      : 0,
-    percentualDraw: totalPalpites
-      ? Math.round((jogo.total_draw / totalPalpites) * 100)
-      : 0,
-    percentualTeam2: totalPalpites
-      ? Math.round((jogo.total_team2 / totalPalpites) * 100)
-      : 0,
-  }
-})
-
+    
     setParticipantes(totalUsuarios || 0)
     setPalpitesJogos(totalJogos || 0)
     setPalpitesGrupos(totalGrupos || 0)
