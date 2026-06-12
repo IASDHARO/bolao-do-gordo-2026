@@ -307,6 +307,19 @@ async function sair() {
 </Link>
 
 <Link
+  href="/meus-acertos"
+  className="bg-white rounded-xl shadow p-6 hover:shadow-lg transition"
+>
+  <h2 className="text-xl font-bold mb-2">
+    🎯 Meus Acertos
+  </h2>
+
+  <p>
+    Acompanhe seus acertos, erros e aproveitamento.
+  </p>
+</Link>
+
+<Link
   href="/financeiro"
   className="bg-white rounded-xl shadow p-6 hover:shadow-lg transition"
 >
