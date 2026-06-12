@@ -53,18 +53,122 @@ export default function ApostasGruposPage() {
   }
 
   function apostasFiltradas() {
-  return apostas.filter((item: any) => {
-    const passaParticipante =
-      !filtroParticipante ||
-      item.participante_email === filtroParticipante
+    return apostas.filter((item: any) => {
+      const passaParticipante =
+        !filtroParticipante ||
+        item.participante_email === filtroParticipante
 
-    const passaGrupo =
-      !filtroGrupo ||
-      item.grupo_nome === filtroGrupo
+      const passaGrupo =
+        !filtroGrupo ||
+        item.grupo_nome === filtroGrupo
 
-    return passaParticipante && passaGrupo
-  })
-}
+      return passaParticipante && passaGrupo
+    })
+  }
+
+  function percentual(valor: number, total: number) {
+    if (!total) return 0
+    return Math.round((valor / total) * 100)
+  }
+
+  function contarPorCampo(dados: any[], campo: string) {
+    const mapa: Record<string, number> = {}
+
+    dados.forEach((item: any) => {
+      const nome = item[campo]
+
+      if (!nome) return
+
+      mapa[nome] = (mapa[nome] || 0) + 1
+    })
+
+    return Object.entries(mapa)
+      .map(([nome, total]) => ({
+        nome,
+        total,
+      }))
+      .sort((a, b) => b.total - a.total)
+  }
+
+  function estatisticasGrupo() {
+    if (!filtroGrupo) return null
+
+    const dadosGrupo = apostas.filter(
+      (item: any) => item.grupo_nome === filtroGrupo
+    )
+
+    return {
+      grupo: filtroGrupo,
+      totalParticipantes: dadosGrupo.length,
+      primeiro: contarPorCampo(dadosGrupo, 'primeiro_nome'),
+      segundo: contarPorCampo(dadosGrupo, 'segundo_nome'),
+      terceiro: contarPorCampo(dadosGrupo, 'terceiro_nome'),
+    }
+  }
+
+  function BarraEstatistica({
+    nome,
+    total,
+    totalBase,
+  }: {
+    nome: string
+    total: number
+    totalBase: number
+  }) {
+    const perc = percentual(total, totalBase)
+
+    return (
+      <div>
+        <div className="flex justify-between mb-1">
+          <strong translate="no">{nome}</strong>
+
+          <span>
+            {total} apostas — {perc}%
+          </span>
+        </div>
+
+        <div className="w-full bg-gray-200 rounded-full h-4">
+          <div
+            className="bg-green-600 h-4 rounded-full"
+            style={{ width: `${perc}%` }}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  function BlocoEstatistica({
+    titulo,
+    dados,
+    totalBase,
+  }: {
+    titulo: string
+    dados: any[]
+    totalBase: number
+  }) {
+    return (
+      <div className="bg-white rounded-xl shadow p-6">
+        <h3 className="text-xl font-bold mb-4">
+          {titulo}
+        </h3>
+
+        {dados.length === 0 ? (
+          <p>Nenhum palpite encontrado.</p>
+        ) : (
+          <div className="grid gap-4">
+            {dados.map((item: any) => (
+              <BarraEstatistica
+                key={item.nome}
+                nome={item.nome}
+                total={item.total}
+                totalBase={totalBase}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
 
   if (loading) {
     return <main className="p-8">Carregando...</main>
@@ -87,6 +191,8 @@ export default function ApostasGruposPage() {
     )
   }
 
+  const estatisticas = estatisticasGrupo()
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-green-200 via-yellow-100 to-blue-200 p-8">
       <h1 className="text-4xl font-bold mb-6">
@@ -100,60 +206,95 @@ export default function ApostasGruposPage() {
       )}
 
       <div className="grid md:grid-cols-3 gap-3 mb-6">
-  <select
-    value={filtroParticipante}
-    onChange={(e) => setFiltroParticipante(e.target.value)}
-    className="border p-3 rounded-lg bg-white"
-  >
-    <option value="">Todos os participantes</option>
+        <select
+          value={filtroParticipante}
+          onChange={(e) => setFiltroParticipante(e.target.value)}
+          className="border p-3 rounded-lg bg-white"
+        >
+          <option value="">Todos os participantes</option>
 
-    {Array.from(
-      new Map(
-        apostas.map((item: any) => [
-          item.participante_email,
-          item.participante_nome || item.participante_email,
-        ])
-      )
-    )
-      .sort((a: any, b: any) =>
-        String(a[1]).localeCompare(String(b[1]))
-      )
-      .map(([email, nome]: any) => (
-        <option key={email} value={email}>
-          {nome}
-        </option>
-      ))}
-  </select>
+          {Array.from(
+            new Map(
+              apostas.map((item: any) => [
+                item.participante_email,
+                item.participante_nome || item.participante_email,
+              ])
+            )
+          )
+            .sort((a: any, b: any) =>
+              String(a[1]).localeCompare(String(b[1]))
+            )
+            .map(([email, nome]: any) => (
+              <option key={email} value={email}>
+                {nome}
+              </option>
+            ))}
+        </select>
 
-  <select
-    value={filtroGrupo}
-    onChange={(e) => setFiltroGrupo(e.target.value)}
-    className="border p-3 rounded-lg bg-white"
-  >
-    <option value="">Todos os grupos</option>
+        <select
+          value={filtroGrupo}
+          onChange={(e) => setFiltroGrupo(e.target.value)}
+          className="border p-3 rounded-lg bg-white"
+        >
+          <option value="">Todos os grupos</option>
 
-    {Array.from(
-      new Set(apostas.map((item: any) => item.grupo_nome))
-    )
-      .filter(Boolean)
-      .sort()
-      .map((grupo: any) => (
-        <option key={grupo} value={grupo}>
-          {grupo}
-        </option>
-      ))}
-  </select>
+          {Array.from(
+            new Set(apostas.map((item: any) => item.grupo_nome))
+          )
+            .filter(Boolean)
+            .sort()
+            .map((grupo: any) => (
+              <option key={grupo} value={grupo}>
+                {grupo}
+              </option>
+            ))}
+        </select>
 
-  <button
-    onClick={() => {
-      setFiltroParticipante('')
-      setFiltroGrupo('')
-    }}
-    className="bg-gray-700 text-white p-3 rounded-lg"
-  >
-    Limpar filtros
-  </button>
-</div>
+        <button
+          onClick={() => {
+            setFiltroParticipante('')
+            setFiltroGrupo('')
+          }}
+          className="bg-gray-700 text-white p-3 rounded-lg"
+        >
+          Limpar filtros
+        </button>
+      </div>
+
+      {estatisticas && (
+        <div className="mb-6">
+          <div className="bg-white rounded-xl shadow p-6 mb-4">
+            <h2 className="text-2xl font-bold mb-2">
+              📊 Estatísticas do {estatisticas.grupo}
+            </h2>
+
+            <p>
+              Total de participantes analisados:{' '}
+              <strong>{estatisticas.totalParticipantes}</strong>
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-3 gap-4">
+            <BlocoEstatistica
+              titulo="🥇 Escolhas para 1º Lugar"
+              dados={estatisticas.primeiro}
+              totalBase={estatisticas.totalParticipantes}
+            />
+
+            <BlocoEstatistica
+              titulo="🥈 Escolhas para 2º Lugar"
+              dados={estatisticas.segundo}
+              totalBase={estatisticas.totalParticipantes}
+            />
+
+            <BlocoEstatistica
+              titulo="🥉 Escolhas para 3º Lugar"
+              dados={estatisticas.terceiro}
+              totalBase={estatisticas.totalParticipantes}
+            />
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-xl shadow overflow-auto">
         <table className="w-full">
