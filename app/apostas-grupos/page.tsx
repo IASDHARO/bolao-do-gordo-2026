@@ -152,7 +152,7 @@ export default function ApostasGruposPage() {
           </thead>
 
           <tbody>
-            {apostasFiltradas().map((item: any, index) => (
+            {apostasFiltradas().map((item, index) => (
               <tr key={index} className="border-b">
                 <td className="p-3">
                   {item.participante_nome ||
