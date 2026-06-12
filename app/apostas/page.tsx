@@ -7,9 +7,11 @@ const PRAZO_FINAL = new Date('2026-06-11T16:00:00')
 
 export default function ApostasPage() {
   const [loading, setLoading] = useState(true)
+  const [carregandoApostas, setCarregandoApostas] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [apostas, setApostas] = useState<any[]>([])
   const [jogosFiltro, setJogosFiltro] = useState<any[]>([])
+  const [participantesFiltro, setParticipantesFiltro] = useState<any[]>([])
   const [filtroParticipante, setFiltroParticipante] = useState('')
   const [filtroJogo, setFiltroJogo] = useState('')
   const [mensagem, setMensagem] = useState('')
@@ -44,22 +46,56 @@ export default function ApostasPage() {
       `)
       .order('match_number')
 
+    const { data: participantesData } = await supabase
+      .from('users')
+      .select('nome,email')
+      .order('nome')
+
     setJogosFiltro(jogosFiltroData || [])
+    setParticipantesFiltro(participantesData || [])
+    setLoading(false)
+  }
 
-    const { data: apostasData, error: apostasError } = await supabase
-      .rpc('apostas_dos_participantes')
-      .range(0, 10000)
+  async function carregarPorJogo(matchNumber: string) {
+    if (!matchNumber) return
 
-    if (apostasError) {
-      setMensagem(
-        'Erro ao carregar apostas: ' + apostasError.message
-      )
-      setLoading(false)
+    setCarregandoApostas(true)
+    setMensagem('')
+
+    const { data, error } = await supabase
+      .rpc('apostas_por_jogo', {
+        p_match_number: Number(matchNumber),
+      })
+
+    if (error) {
+      setMensagem('Erro ao carregar apostas do jogo: ' + error.message)
+      setCarregandoApostas(false)
       return
     }
 
-    setApostas(apostasData || [])
-    setLoading(false)
+    setApostas(data || [])
+    setCarregandoApostas(false)
+  }
+
+  async function carregarPorParticipante(email: string) {
+    if (!email) return
+
+    setCarregandoApostas(true)
+    setMensagem('')
+
+    const { data, error } = await supabase
+      .rpc('apostas_por_participante', {
+        p_email: email,
+      })
+
+    if (error) {
+      setMensagem('Erro ao carregar apostas do participante: ' + error.message)
+      setCarregandoApostas(false)
+      return
+    }
+
+    setApostas(data || [])
+    setCarregandoApostas(false)
   }
 
   function podeVer() {
@@ -74,18 +110,11 @@ export default function ApostasPage() {
     return 'Não fez palpite'
   }
 
-  function apostasFiltradas() {
-    return apostas.filter((item: any) => {
-      const passaParticipante =
-        !filtroParticipante ||
-        item.participante_email === filtroParticipante
-
-      const passaJogo =
-        !filtroJogo ||
-        String(item.match_number) === filtroJogo
-
-      return passaParticipante && passaJogo
-    })
+  function limparFiltros() {
+    setFiltroParticipante('')
+    setFiltroJogo('')
+    setApostas([])
+    setMensagem('')
   }
 
   if (loading) {
@@ -101,8 +130,8 @@ export default function ApostasPage() {
           </h1>
 
           <p>
-            Esta página será liberada para os
-            participantes em 11/06/2026 às 16:00.
+            Esta página será liberada para os participantes em
+            11/06/2026 às 16:00.
           </p>
         </div>
       </main>
@@ -121,78 +150,104 @@ export default function ApostasPage() {
         </div>
       )}
 
-      <div className="grid md:grid-cols-3 gap-3 mb-6">
-        <select
-          value={filtroParticipante}
-          onChange={(e) =>
-            setFiltroParticipante(e.target.value)
-          }
-          className="border p-3 rounded-lg bg-white"
-        >
-          <option value="">Todos os participantes</option>
+      <div className="bg-white rounded-xl shadow p-6 mb-6">
+        <h2 className="text-2xl font-bold mb-4">
+          🔎 Filtros
+        </h2>
 
-          {Array.from(
-            new Map(
-              apostas.map((item: any) => [
-                item.participante_email,
-                item.participante_nome ||
-                  item.participante_email,
-              ])
-            )
-          )
-            .sort((a: any, b: any) =>
-              String(a[1]).localeCompare(String(b[1]))
-            )
-            .map(([email, nome]: any) => (
-              <option key={email} value={email}>
-                {nome}
+        <div className="grid md:grid-cols-3 gap-3">
+          <select
+            value={filtroJogo}
+            onChange={(e) => {
+              const valor = e.target.value
+              setFiltroJogo(valor)
+              setFiltroParticipante('')
+              setApostas([])
+
+              if (valor) {
+                carregarPorJogo(valor)
+              }
+            }}
+            className="border p-3 rounded-lg bg-white"
+          >
+            <option value="">
+              Selecione um jogo para visualizar as apostas
+            </option>
+
+            {jogosFiltro.map((jogo: any) => (
+              <option
+                key={jogo.id}
+                value={String(jogo.match_number)}
+              >
+                Jogo {jogo.match_number}: {jogo.team1?.nome} x {jogo.team2?.nome}
               </option>
             ))}
-        </select>
+          </select>
 
-        <select
-          value={filtroJogo}
-          onChange={(e) =>
-            setFiltroJogo(e.target.value)
-          }
-          className="border p-3 rounded-lg bg-white"
-        >
-          <option value="">Todos os jogos</option>
+          <select
+            value={filtroParticipante}
+            onChange={(e) => {
+              const valor = e.target.value
+              setFiltroParticipante(valor)
+              setFiltroJogo('')
+              setApostas([])
 
-          {jogosFiltro.map((jogo: any) => (
-            <option
-              key={jogo.id}
-              value={String(jogo.match_number)}
-            >
-              Jogo {jogo.match_number}: {jogo.team1?.nome} x {jogo.team2?.nome}
+              if (valor) {
+                carregarPorParticipante(valor)
+              }
+            }}
+            className="border p-3 rounded-lg bg-white"
+          >
+            <option value="">
+              Selecione um participante para visualizar as apostas
             </option>
-          ))}
-        </select>
 
-        <button
-          onClick={() => {
-            setFiltroParticipante('')
-            setFiltroJogo('')
-          }}
-          className="bg-gray-700 text-white p-3 rounded-lg"
-        >
-          Limpar filtros
-        </button>
+            {participantesFiltro.map((p: any) => (
+              <option
+                key={p.email}
+                value={p.email}
+              >
+                {p.nome || p.email}
+              </option>
+            ))}
+          </select>
+
+          <button
+            onClick={limparFiltros}
+            className="bg-gray-700 text-white p-3 rounded-lg"
+          >
+            Limpar filtros
+          </button>
+        </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow overflow-auto">
-        <table className="w-full">
-          <thead className="bg-green-600 text-white">
-            <tr>
-              <th className="p-3">Participante</th>
-              <th className="p-3">Jogo</th>
-              <th className="p-3">Palpite</th>
-            </tr>
-          </thead>
+      {carregandoApostas && (
+        <div className="bg-white rounded-xl shadow p-6 mb-6">
+          Carregando apostas...
+        </div>
+      )}
 
-          <tbody>
-            {apostasFiltradas().map(
-              (item: any, index) => (
+      {!carregandoApostas && apostas.length === 0 && (
+        <div className="bg-white rounded-xl shadow p-6">
+          <p>
+            Selecione um jogo ou um participante para visualizar as apostas.
+          </p>
+        </div>
+      )}
+
+      {!carregandoApostas && apostas.length > 0 && (
+        <div className="bg-white rounded-xl shadow overflow-auto">
+          <table className="w-full">
+            <thead className="bg-green-600 text-white">
+              <tr>
+                <th className="p-3">Participante</th>
+                <th className="p-3">Jogo</th>
+                <th className="p-3">Palpite</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {apostas.map((item: any, index) => (
                 <tr
                   key={index}
                   className="border-b"
@@ -209,17 +264,14 @@ export default function ApostasPage() {
                   </td>
 
                   <td className="p-3 font-bold" translate="no">
-                    {traduzirPalpite(
-                      item.prediction,
-                      item
-                    )}
+                    {traduzirPalpite(item.prediction, item)}
                   </td>
                 </tr>
-              )
-            )}
-          </tbody>
-        </table>
-      </div>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </main>
   )
 }
