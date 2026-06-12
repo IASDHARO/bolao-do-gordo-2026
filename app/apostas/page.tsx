@@ -117,6 +117,73 @@ export default function ApostasPage() {
     setMensagem('')
   }
 
+  function percentual(valor: number, total: number) {
+    if (!total) return 0
+    return Math.round((valor / total) * 100)
+  }
+
+  function estatisticasJogo() {
+    const votosValidos = apostas.filter(
+      (item: any) =>
+        item.prediction === 'team1' ||
+        item.prediction === 'team2' ||
+        item.prediction === 'draw'
+    )
+
+    const total = votosValidos.length
+
+    const totalTeam1 = votosValidos.filter(
+      (item: any) => item.prediction === 'team1'
+    ).length
+
+    const totalDraw = votosValidos.filter(
+      (item: any) => item.prediction === 'draw'
+    ).length
+
+    const totalTeam2 = votosValidos.filter(
+      (item: any) => item.prediction === 'team2'
+    ).length
+
+    const jogo = apostas[0]
+
+    return {
+      total,
+      totalTeam1,
+      totalDraw,
+      totalTeam2,
+      team1Nome: jogo?.team1_nome || 'Time 1',
+      team2Nome: jogo?.team2_nome || 'Time 2',
+    }
+  }
+
+  function BarraEstatistica({
+    nome,
+    total,
+    percentualValor,
+  }: {
+    nome: string
+    total: number
+    percentualValor: number
+  }) {
+    return (
+      <div>
+        <div className="flex justify-between mb-1">
+          <strong translate="no">{nome}</strong>
+          <span>
+            {total} apostas — {percentualValor}%
+          </span>
+        </div>
+
+        <div className="w-full bg-gray-200 rounded-full h-4">
+          <div
+            className="bg-green-600 h-4 rounded-full"
+            style={{ width: `${percentualValor}%` }}
+          />
+        </div>
+      </div>
+    )
+  }
+
   if (loading) {
     return <main className="p-8">Carregando...</main>
   }
@@ -137,6 +204,8 @@ export default function ApostasPage() {
       </main>
     )
   }
+
+  const estatisticas = estatisticasJogo()
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-green-200 via-yellow-100 to-blue-200 p-8">
@@ -220,6 +289,52 @@ export default function ApostasPage() {
           </button>
         </div>
       </div>
+
+      {filtroJogo && !carregandoApostas && apostas.length > 0 && (
+        <div className="bg-white rounded-xl shadow p-6 mb-6">
+          <h2 className="text-2xl font-bold mb-4">
+            📊 Estatísticas do Jogo
+          </h2>
+
+          <p className="font-bold mb-4" translate="no">
+            Jogo {apostas[0]?.match_number}: {estatisticas.team1Nome} x{' '}
+            {estatisticas.team2Nome}
+          </p>
+
+          <div className="grid gap-4">
+            <BarraEstatistica
+              nome={estatisticas.team1Nome}
+              total={estatisticas.totalTeam1}
+              percentualValor={percentual(
+                estatisticas.totalTeam1,
+                estatisticas.total
+              )}
+            />
+
+            <BarraEstatistica
+              nome="Empate"
+              total={estatisticas.totalDraw}
+              percentualValor={percentual(
+                estatisticas.totalDraw,
+                estatisticas.total
+              )}
+            />
+
+            <BarraEstatistica
+              nome={estatisticas.team2Nome}
+              total={estatisticas.totalTeam2}
+              percentualValor={percentual(
+                estatisticas.totalTeam2,
+                estatisticas.total
+              )}
+            />
+          </div>
+
+          <p className="mt-4 font-bold">
+            Total de palpites: {estatisticas.total}
+          </p>
+        </div>
+      )}
 
       {carregandoApostas && (
         <div className="bg-white rounded-xl shadow p-6 mb-6">
