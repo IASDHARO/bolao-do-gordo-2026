@@ -11,6 +11,7 @@ export default function ApostasPage() {
   const [apostas, setApostas] = useState<any[]>([])
   const [filtroParticipante, setFiltroParticipante] = useState('')
   const [filtroJogo, setFiltroJogo] = useState('')
+  const [mensagem, setMensagem] = useState('')
 
   useEffect(() => {
     carregarDados()
@@ -32,32 +33,18 @@ export default function ApostasPage() {
 
     setIsAdmin(!!usuario?.is_admin)
 
-    const { data: usersData } = await supabase
-      .from('users')
-      .select('*')
+    const { data: apostasData, error: apostasError } = await supabase
+      .rpc('apostas_dos_participantes')
 
-    const { data: palpitesData } = await supabase
-      .from('match_predictions')
-      .select(`
-        prediction,
-        user_id,
-        matches(
-          match_number,
-          data_hora,
-          team1:teams!matches_team1_id_fkey(nome),
-          team2:teams!matches_team2_id_fkey(nome)
-        )
-      `)
+    if (apostasError) {
+      setMensagem(
+        'Erro ao carregar apostas: ' + apostasError.message
+      )
+      setLoading(false)
+      return
+    }
 
-    const resultado =
-      palpitesData?.map((item: any) => ({
-        ...item,
-        usuario: usersData?.find(
-          (u: any) => u.id === item.user_id
-        ),
-      })) || []
-
-    setApostas(resultado)
+    setApostas(apostasData || [])
     setLoading(false)
   }
 
@@ -65,18 +52,10 @@ export default function ApostasPage() {
     return isAdmin || new Date() >= PRAZO_FINAL
   }
 
-  function traduzirPalpite(
-    prediction: string,
-    jogo: any
-  ) {
-    if (prediction === 'team1')
-      return jogo?.team1?.nome
-
-    if (prediction === 'team2')
-      return jogo?.team2?.nome
-
-    if (prediction === 'draw')
-      return 'Empate'
+  function traduzirPalpite(prediction: string, item: any) {
+    if (prediction === 'team1') return item.team1_nome || 'Time 1'
+    if (prediction === 'team2') return item.team2_nome || 'Time 2'
+    if (prediction === 'draw') return 'Empate'
 
     return '-'
   }
@@ -84,17 +63,16 @@ export default function ApostasPage() {
   function apostasFiltradas() {
     return apostas.filter((item: any) => {
       const participante =
-        (
-          item.usuario?.nome ||
-          item.usuario?.email ||
-          ''
-        ).toLowerCase()
+        `
+          ${item.participante_nome || ''}
+          ${item.participante_email || ''}
+        `.toLowerCase()
 
       const jogo =
         `
-          ${item.matches?.match_number}
-          ${item.matches?.team1?.nome || ''}
-          ${item.matches?.team2?.nome || ''}
+          ${item.match_number}
+          ${item.team1_nome || ''}
+          ${item.team2_nome || ''}
         `.toLowerCase()
 
       const passaParticipante =
@@ -138,6 +116,12 @@ export default function ApostasPage() {
         👀 Apostas dos Participantes
       </h1>
 
+      {mensagem && (
+        <div className="bg-white rounded-lg shadow p-3 mb-4">
+          {mensagem}
+        </div>
+      )}
+
       <div className="grid md:grid-cols-2 gap-3 mb-6">
         <input
           type="text"
@@ -160,7 +144,7 @@ export default function ApostasPage() {
         />
       </div>
 
-      <div className="bg-white rounded-xl shadow overflow-hidden">
+      <div className="bg-white rounded-xl shadow overflow-auto">
         <table className="w-full">
           <thead className="bg-green-600 text-white">
             <tr>
@@ -178,21 +162,20 @@ export default function ApostasPage() {
                   className="border-b"
                 >
                   <td className="p-3">
-                    {item.usuario?.nome ||
-                      item.usuario?.email}
+                    {item.participante_nome ||
+                      item.participante_email}
                   </td>
 
-                  <td className="p-3">
-                    Jogo{' '}
-                    {item.matches?.match_number}:{' '}
-                    {item.matches?.team1?.nome} x{' '}
-                    {item.matches?.team2?.nome}
+                  <td className="p-3" translate="no">
+                    Jogo {item.match_number}:{' '}
+                    {item.team1_nome || 'Time 1'} x{' '}
+                    {item.team2_nome || 'Time 2'}
                   </td>
 
-                  <td className="p-3 font-bold">
+                  <td className="p-3 font-bold" translate="no">
                     {traduzirPalpite(
                       item.prediction,
-                      item.matches
+                      item
                     )}
                   </td>
                 </tr>
