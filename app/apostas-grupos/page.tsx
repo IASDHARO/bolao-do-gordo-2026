@@ -53,26 +53,18 @@ export default function ApostasGruposPage() {
   }
 
   function apostasFiltradas() {
-    return apostas.filter((item: any) => {
-      const participante =
-        `
-          ${item.participante_nome || ''}
-          ${item.participante_email || ''}
-        `.toLowerCase()
+  return apostas.filter((item: any) => {
+    const passaParticipante =
+      !filtroParticipante ||
+      item.participante_email === filtroParticipante
 
-      const grupo = (item.grupo_nome || '').toLowerCase()
+    const passaGrupo =
+      !filtroGrupo ||
+      item.grupo_nome === filtroGrupo
 
-      const passaParticipante =
-        !filtroParticipante ||
-        participante.includes(filtroParticipante.toLowerCase())
-
-      const passaGrupo =
-        !filtroGrupo ||
-        grupo.includes(filtroGrupo.toLowerCase())
-
-      return passaParticipante && passaGrupo
-    })
-  }
+    return passaParticipante && passaGrupo
+  })
+}
 
   if (loading) {
     return <main className="p-8">Carregando...</main>
@@ -108,36 +100,60 @@ export default function ApostasGruposPage() {
       )}
 
       <div className="grid md:grid-cols-3 gap-3 mb-6">
-        <input
-          type="text"
-          placeholder="Filtrar participante..."
-          value={filtroParticipante}
-          onChange={(e) =>
-            setFiltroParticipante(e.target.value)
-          }
-          className="border p-3 rounded-lg"
-        />
+  <select
+    value={filtroParticipante}
+    onChange={(e) => setFiltroParticipante(e.target.value)}
+    className="border p-3 rounded-lg bg-white"
+  >
+    <option value="">Todos os participantes</option>
 
-        <input
-          type="text"
-          placeholder="Filtrar grupo..."
-          value={filtroGrupo}
-          onChange={(e) =>
-            setFiltroGrupo(e.target.value)
-          }
-          className="border p-3 rounded-lg"
-        />
+    {Array.from(
+      new Map(
+        apostas.map((item: any) => [
+          item.participante_email,
+          item.participante_nome || item.participante_email,
+        ])
+      )
+    )
+      .sort((a: any, b: any) =>
+        String(a[1]).localeCompare(String(b[1]))
+      )
+      .map(([email, nome]: any) => (
+        <option key={email} value={email}>
+          {nome}
+        </option>
+      ))}
+  </select>
 
-        <button
-          onClick={() => {
-            setFiltroParticipante('')
-            setFiltroGrupo('')
-          }}
-          className="bg-gray-700 text-white p-3 rounded-lg"
-        >
-          Limpar filtros
-        </button>
-      </div>
+  <select
+    value={filtroGrupo}
+    onChange={(e) => setFiltroGrupo(e.target.value)}
+    className="border p-3 rounded-lg bg-white"
+  >
+    <option value="">Todos os grupos</option>
+
+    {Array.from(
+      new Set(apostas.map((item: any) => item.grupo_nome))
+    )
+      .filter(Boolean)
+      .sort()
+      .map((grupo: any) => (
+        <option key={grupo} value={grupo}>
+          {grupo}
+        </option>
+      ))}
+  </select>
+
+  <button
+    onClick={() => {
+      setFiltroParticipante('')
+      setFiltroGrupo('')
+    }}
+    className="bg-gray-700 text-white p-3 rounded-lg"
+  >
+    Limpar filtros
+  </button>
+</div>
 
       <div className="bg-white rounded-xl shadow overflow-auto">
         <table className="w-full">
