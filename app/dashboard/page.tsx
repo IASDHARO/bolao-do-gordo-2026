@@ -226,7 +226,7 @@ async function sair() {
     Sair
   </button>
 </div>
-      <div className="grid md:grid-cols-5 gap-4 mb-8">
+      <div className="grid md:grid-cols-3 lg:grid-cols-7 gap-4 mb-8">
 
   <Link
     href="/perfil"
@@ -290,6 +290,19 @@ async function sair() {
 
   <p>
     Veja os palpites de todos após a liberação.
+  </p>
+</Link>
+  
+  <Link
+  href="/apostas-grupos"
+  className="bg-white rounded-xl shadow p-6 hover:shadow-lg transition"
+>
+  <h2 className="text-xl font-bold mb-2">
+    🏆 Apostas dos Grupos
+  </h2>
+
+  <p>
+    Veja os palpites dos grupos de todos os participantes.
   </p>
 </Link>
 
